@@ -27,7 +27,7 @@ export default function LoginPage() {
         })
 
         if (error) {
-            setError('Invalid email or password')
+            setError('Correo electrónico o contraseña incorrectos')
             setLoading(false)
             return
         }
@@ -40,15 +40,15 @@ export default function LoginPage() {
         <main className="flex min-h-screen items-center justify-center bg-[#0f172a]">
             <div className="w-full max-w-md rounded-2xl bg-[#1e293b] p-8 shadow-xl">
                 {/* Header branding */}
-                <h1 className="mb-2 text-2xl font-bold text-white">Book Fair Manager</h1>
-                <p className="mb-8 text-sm text-[#94a3b8]">Sign in to your account</p>
+                <h1 className="mb-2 text-2xl font-bold text-white">Masticadores León</h1>
+                <p className="mb-8 text-sm text-[#94a3b8]">Inicia sesión en tu cuenta</p>
 
                 {/* Login Form */}
                 <form onSubmit={handleLogin} className="flex flex-col gap-4">
                     {/* Email Input */}
                     <input
                         type="email"
-                        placeholder="Email address"
+                        placeholder="Correo electrónico"
                         value={email}
                         onChange={e => setEmail(e.target.value)}
                         required
@@ -58,7 +58,7 @@ export default function LoginPage() {
                     {/* Password Input */}
                     <input
                         type="password"
-                        placeholder="Password"
+                        placeholder="Contraseña"
                         value={password}
                         onChange={e => setPassword(e.target.value)}
                         required
@@ -76,11 +76,12 @@ export default function LoginPage() {
                         disabled={loading}
                         className="mt-2 rounded-lg bg-[#6366f1] py-3 font-semibold text-white transition hover:bg-[#4f46e5] disabled:opacity-50"
                     >
-                        {loading ? 'Signing in...' : 'Sign in'}
+                        {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
                     </button>
                 </form>
             </div>
         </main>
     )
 }
-
+
+
