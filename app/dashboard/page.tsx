@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { supabase } from '@/lib/supabase'
+import NewFairModal from '@/components/NewFairModal'
 
 // Type definition for a book fair record
 type Fair = {
@@ -17,6 +18,7 @@ export default function DashboardPage() {
     // State management
     const [fairs, setFairs] = useState<Fair[]>([])
     const [loading, setLoading] = useState(true)
+    const [showModal, setShowModal] = useState(false)
 
     // Fetch book fairs from Supabase database
     async function loadFairs() {
@@ -55,7 +57,9 @@ export default function DashboardPage() {
                 {/* Section header with action button */}
                 <div className="mb-6 flex items-center justify-between">
                     <h2 className="text-2xl font-bold text-white">Ferias</h2>
-                    <button className="rounded-lg bg-[#6366f1] px-5 py-2.5 font-semibold text-white transition hover:bg-[#4f46e5]">
+                    <button
+                        onClick={() => setShowModal(true)}
+                        className="rounded-lg bg-[#6366f1] px-5 py-2.5 font-semibold text-white transition hover:bg-[#4f46e5]">
                         + Nueva Feria
                     </button>
                 </div>
@@ -95,6 +99,15 @@ export default function DashboardPage() {
                     </div>
                 )}
             </main>
+
+            {/* Modal for creating a new fair */}
+            {showModal && (
+                <NewFairModal
+                    onClose={() => setShowModal(false)}
+                    onCreated={loadFairs}
+                />
+            )}
         </div>
     )
 }
+
