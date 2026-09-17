@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import NewBookModal from '@/components/NewBookModal'
 
 // Type definition for a Book record
 type Book = {
@@ -24,6 +25,7 @@ export default function BooksPage() {
     const [fairName, setFairName] = useState('')
     const [books, setBooks] = useState<Book[]>([])
     const [loading, setLoading] = useState(true)
+    const [showModal, setShowModal] = useState(false)
 
     // Fetch fair details and books from Supabase database
     async function loadData() {
@@ -88,7 +90,9 @@ export default function BooksPage() {
                 {/* Section header with action button */}
                 <div className="mb-6 flex items-center justify-between">
                     <h2 className="text-2xl font-bold text-white">Catálogo de Libros</h2>
-                    <button className="rounded-lg bg-[#6366f1] px-5 py-2.5 font-semibold text-white transition hover:bg-[#4f46e5]">
+                    <button
+                        onClick={() => setShowModal(true)}
+                        className="rounded-lg bg-[#6366f1] px-5 py-2.5 font-semibold text-white transition hover:bg-[#4f46e5]">
                         + Añadir Libro
                     </button>
                 </div>
@@ -118,7 +122,7 @@ export default function BooksPage() {
                             >
                                 <h3 className="text-lg font-bold text-white">{book.title}</h3>
                                 {book.author && (
-                                    <p className="mt-1 text-sm text-[#94a3b8]">✍️ {book.author}</p>
+                                    <p className="mt-1 text-sm text-[#94a3b8]"> {book.author}</p>
                                 )}
                                 <div className="mt-4 flex items-center justify-between border-t border-[#334155] pt-4">
                                     <span className="text-lg font-semibold text-[#6366f1]">{book.price} €</span>
@@ -131,7 +135,16 @@ export default function BooksPage() {
                     </div>
                 )}
             </main>
+            {/* Modal for adding a new book */}
+            {showModal && fairId && (
+                <NewBookModal
+                    fairId={Array.isArray(fairId) ? fairId[0] : fairId}
+                    onClose={() => setShowModal(false)}
+                    onCreated={loadData}
+                />
+            )}
         </div>
     )
 }
+
 
