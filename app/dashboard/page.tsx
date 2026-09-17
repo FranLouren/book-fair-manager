@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { supabase } from '@/lib/supabase'
 import NewFairModal from '@/components/NewFairModal'
+import { useRouter } from 'next/navigation'
 
 // Type definition for a book fair record
 type Fair = {
@@ -19,6 +20,9 @@ export default function DashboardPage() {
     const [fairs, setFairs] = useState<Fair[]>([])
     const [loading, setLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)
+
+    // Router for navigation
+    const router = useRouter()
 
     // Fetch book fairs from Supabase database
     async function loadFairs() {
@@ -86,7 +90,10 @@ export default function DashboardPage() {
                 {!loading && fairs.length > 0 && (
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {fairs.map(fair => (
-                            <div key={fair.id} className="rounded-2xl border border-[#334155] bg-[#1e293b] p-6">
+                            <div
+                                key={fair.id}
+                                onClick={() => router.push(`/dashboard/${fair.id}/books`)}
+                                className="cursor-pointer rounded-2xl border border-[#334155] bg-[#1e293b] p-6 transition hover:border-[#6366f1]">
                                 <h3 className="text-lg font-bold text-white">{fair.name}</h3>
                                 {fair.location && (
                                     <p className="mt-1 text-sm text-[#94a3b8]">📍 {fair.location}</p>
