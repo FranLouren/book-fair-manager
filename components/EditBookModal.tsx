@@ -30,7 +30,18 @@ export default function EditBookModal({ book, onClose, onUpdated }: Props) {
 
     // Submit handler to update book in Supabase
     async function handleSubmit() {
-        if (!title.trim() || !isbn.trim() || !price) return
+        // Check for missing mandatory fields
+        const missing: string[] = []
+        if (!title.trim()) missing.push('Título')
+        if (!author.trim()) missing.push('Autor')
+        if (!isbn.trim()) missing.push('ISBN')
+        if (!price || parseFloat(price) <= 0) missing.push('Precio')
+        if (!stock || parseInt(stock) < 0) missing.push('Stock')
+
+        if (missing.length > 0) {
+            setErrorMsg(`Por favor, rellena los siguientes campos obligatorios: ${missing.join(', ')}.`)
+            return
+        }
 
         setSaving(true)
         setErrorMsg(null)
@@ -39,7 +50,7 @@ export default function EditBookModal({ book, onClose, onUpdated }: Props) {
             .from('books')
             .update({
                 title: title.trim(),
-                author: author.trim() || null,
+                author: author.trim(),
                 isbn: isbn.trim(),
                 price: parseFloat(price) || 0,
                 stock: parseInt(stock) || 0,
@@ -90,24 +101,26 @@ export default function EditBookModal({ book, onClose, onUpdated }: Props) {
 
                     {/* Author */}
                     <div>
-                        <label className="mb-1 block text-xs text-[#94a3b8]">Autor / Autora</label>
+                        <label className="mb-1 block text-xs text-[#94a3b8]">Autor / Autora *</label>
                         <input
                             type="text"
                             placeholder="Autor / Autora"
                             value={author}
                             onChange={e => setAuthor(e.target.value)}
+                            required
                             className="w-full rounded-lg bg-[#0f172a] px-4 py-3 text-white placeholder-[#94a3b8] outline-none ring-1 ring-[#334155] focus:ring-[#6366f1]"
                         />
                     </div>
 
                     {/* ISBN */}
                     <div>
-                        <label className="mb-1 block text-xs text-[#94a3b8]">ISBN</label>
+                        <label className="mb-1 block text-xs text-[#94a3b8]">ISBN *</label>
                         <input
                             type="text"
                             placeholder="ISBN"
                             value={isbn}
                             onChange={e => setIsbn(e.target.value)}
+                            required
                             className="w-full rounded-lg bg-[#0f172a] px-4 py-3 text-white placeholder-[#94a3b8] outline-none ring-1 ring-[#334155] focus:ring-[#6366f1]"
                         />
                     </div>

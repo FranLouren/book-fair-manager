@@ -22,7 +22,18 @@ export default function NewBookModal({ fairId, onClose, onCreated }: Props) {
 
     // Submit handler to insert book into Supabase
     async function handleSubmit() {
-        if (!title.trim() || !isbn.trim() || !price) return
+        // Check for missing mandatory fields
+        const missing: string[] = []
+        if (!title.trim()) missing.push('Título')
+        if (!author.trim()) missing.push('Autor')
+        if (!isbn.trim()) missing.push('ISBN')
+        if (!price || parseFloat(price) <= 0) missing.push('Precio')
+        if (!stock || parseInt(stock) < 1) missing.push('Stock')
+
+        if (missing.length > 0) {
+            setErrorMsg(`Por favor, rellena los siguientes campos obligatorios: ${missing.join(', ')}.`)
+            return
+        }
 
         setSaving(true)
         setErrorMsg(null)
@@ -32,7 +43,7 @@ export default function NewBookModal({ fairId, onClose, onCreated }: Props) {
             .insert({
                 fair_id: Number(fairId),
                 title: title.trim(),
-                author: author.trim() || null,
+                author: author.trim(),
                 isbn: isbn.trim(),
                 price: parseFloat(price) || 0,
                 stock: parseInt(stock) || 1,
@@ -80,16 +91,17 @@ export default function NewBookModal({ fairId, onClose, onCreated }: Props) {
                     {/* Author */}
                     <input
                         type="text"
-                        placeholder="Autor / Autora"
+                        placeholder="Autor / Autora *"
                         value={author}
                         onChange={e => setAuthor(e.target.value)}
+                        required
                         className="rounded-lg bg-[#0f172a] px-4 py-3 text-white placeholder-[#94a3b8] outline-none ring-1 ring-[#334155] focus:ring-[#6366f1]"
                     />
 
                     {/* ISBN */}
                     <input
                         type="text"
-                        placeholder="ISBN"
+                        placeholder="ISBN *"
                         value={isbn}
                         onChange={e => setIsbn(e.target.value)}
                         required

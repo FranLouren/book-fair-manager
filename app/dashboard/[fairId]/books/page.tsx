@@ -26,6 +26,7 @@ export default function BooksPage() {
 
     // State management
     const [fairName, setFairName] = useState('')
+    const [discountPercentage, setDiscountPercentage] = useState(10)
     const [books, setBooks] = useState<Book[]>([])
     const [loading, setLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)
@@ -64,15 +65,18 @@ export default function BooksPage() {
 
         setLoading(true)
 
-        // 1. Query 'fairs' table to get the fair name for this ID
+        // 1. Query 'fairs' table to get the fair name and discount percentage for this ID
         const { data: fairData } = await supabase
             .from('fairs')
-            .select('name')
+            .select('name, discount_percentage')
             .eq('id', fairId)
             .single()
 
         if (fairData) {
             setFairName(fairData.name)
+            if (fairData.discount_percentage !== undefined && fairData.discount_percentage !== null) {
+                setDiscountPercentage(Number(fairData.discount_percentage))
+            }
         }
 
         // 2. Query 'books' table to get the books for this fair
@@ -213,7 +217,7 @@ export default function BooksPage() {
                                         <th className="px-6 py-4 font-semibold text-left w-[24%]">Título</th>
                                         <th className="px-6 py-4 font-semibold text-left w-[18%]">Autor</th>
                                         <th className="px-6 py-4 font-semibold text-left w-[10%]">Precio</th>
-                                        <th className="px-6 py-4 font-semibold text-left w-[12%] text-emerald-400">Precio Feria (-10%)</th>
+                                        <th className="px-6 py-4 font-semibold text-left w-[12%] text-emerald-400">Precio Feria (-{discountPercentage}%)</th>
                                         <th className="px-6 py-4 font-semibold text-center w-[6%]">Stock</th>
                                         <th className="px-6 py-4 font-semibold text-center w-[6%]">Vendidos</th>
                                         <th className="px-6 py-4 font-semibold text-right w-[8%]">Acciones</th>
@@ -234,7 +238,7 @@ export default function BooksPage() {
                                                 <td className="px-6 py-4 text-[#94a3b8] text-left">{book.author || '-'}</td>
                                                 <td className="px-6 py-4 font-medium text-[#94a3b8] text-left">{book.price} €</td>
                                                 <td className="px-6 py-4 font-bold text-emerald-400 text-left">
-                                                    {(book.price * 0.9).toFixed(2)} €
+                                                    {((book.price * (100 - discountPercentage)) / 100).toFixed(2)} €
                                                 </td>
                                                 <td className="px-6 py-4 text-center">
                                                     <span className="inline-block rounded-md bg-[#0f172a] px-2.5 py-1 text-xs font-medium text-white">
