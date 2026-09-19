@@ -11,18 +11,21 @@ type Props = {
 }
 
 export default function NewBookModal({ fairId, onClose, onCreated }: Props) {
-    // 1. Form fields state
+    // Form fields state
     const [title, setTitle] = useState('')
     const [author, setAuthor] = useState('')
+    const [isbn, setIsbn] = useState('')
     const [price, setPrice] = useState('')
     const [stock, setStock] = useState('1')
     const [saving, setSaving] = useState(false)
+    const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-    // 2. Submit handler to insert book into Supabase
+    // Submit handler to insert book into Supabase
     async function handleSubmit() {
-        if (!title.trim() || !price) return
+        if (!title.trim() || !isbn.trim() || !price) return
 
         setSaving(true)
+        setErrorMsg(null)
 
         const { error } = await supabase
             .from('books')
@@ -30,12 +33,18 @@ export default function NewBookModal({ fairId, onClose, onCreated }: Props) {
                 fair_id: Number(fairId),
                 title: title.trim(),
                 author: author.trim() || null,
+                isbn: isbn.trim(),
                 price: parseFloat(price) || 0,
                 stock: parseInt(stock) || 1,
             })
 
         if (error) {
             console.error('Error creating book:', error)
+            if (error.code === '23505') {
+                setErrorMsg('Ya existe un libro registrado con este ISBN en esta feria.')
+            } else {
+                setErrorMsg(error.message || 'Error al guardar el libro')
+            }
             setSaving(false)
             return
         }
@@ -46,9 +55,15 @@ export default function NewBookModal({ fairId, onClose, onCreated }: Props) {
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-            <div className="w-full max-w-md rounded-2xl bg-[#1e293b] p-8 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="w-full max-w-md rounded-2xl bg-[#1e293b] p-8 shadow-2xl border border-[#334155]">
                 <h3 className="mb-6 text-xl font-bold text-white">Añadir Nuevo Libro</h3>
+
+                {errorMsg && (
+                    <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/30 p-3 text-xs text-red-400">
+                        {errorMsg}
+                    </div>
+                )}
 
                 {/* Form inputs */}
                 <div className="flex flex-col gap-4">
@@ -68,6 +83,16 @@ export default function NewBookModal({ fairId, onClose, onCreated }: Props) {
                         placeholder="Autor / Autora"
                         value={author}
                         onChange={e => setAuthor(e.target.value)}
+                        className="rounded-lg bg-[#0f172a] px-4 py-3 text-white placeholder-[#94a3b8] outline-none ring-1 ring-[#334155] focus:ring-[#6366f1]"
+                    />
+
+                    {/* ISBN */}
+                    <input
+                        type="text"
+                        placeholder="ISBN"
+                        value={isbn}
+                        onChange={e => setIsbn(e.target.value)}
+                        required
                         className="rounded-lg bg-[#0f172a] px-4 py-3 text-white placeholder-[#94a3b8] outline-none ring-1 ring-[#334155] focus:ring-[#6366f1]"
                     />
 
