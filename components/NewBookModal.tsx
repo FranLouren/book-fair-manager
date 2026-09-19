@@ -38,7 +38,9 @@ export default function NewBookModal({ fairId, onClose, onCreated }: Props) {
         setSaving(true)
         setErrorMsg(null)
 
-        const { error } = await supabase
+        const initialStockNum = parseInt(stock) || 1
+
+        const { data: newBook, error } = await supabase
             .from('books')
             .insert({
                 fair_id: Number(fairId),
@@ -46,8 +48,10 @@ export default function NewBookModal({ fairId, onClose, onCreated }: Props) {
                 author: author.trim(),
                 isbn: isbn.trim(),
                 price: parseFloat(price) || 0,
-                stock: parseInt(stock) || 1,
+                stock: initialStockNum,
             })
+            .select()
+            .single()
 
         if (error) {
             console.error('Error creating book:', error)
@@ -58,6 +62,16 @@ export default function NewBookModal({ fairId, onClose, onCreated }: Props) {
             }
             setSaving(false)
             return
+        }
+
+        // Record initial stock movement for history audit log
+        if (newBook) {
+            await supabase.from('stock_movements').insert({
+                fair_id: Number(fairId),
+                book_id: newBook.id,
+                quantity: initialStockNum,
+                movement_type: 'initial',
+            })
         }
 
         setSaving(false)

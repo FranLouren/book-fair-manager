@@ -88,8 +88,9 @@ export default function DashboardPage() {
         loadFairs()
     }
 
-    // Load fairs on component mount
+    // Set tab title and load fairs on component mount
     useEffect(() => {
+        document.title = "Feria Masticadores"
         loadFairs()
     }, [])
 
@@ -98,9 +99,17 @@ export default function DashboardPage() {
 
             {/* Header navbar */}
             <header className="border-b border-[#1e293b] bg-[#0f172a] px-8 py-5">
-                <div>
-                    <h1 className="text-xl font-bold text-white">Masticadores León</h1>
-                    <p className="text-sm text-[#94a3b8]">Gestión de Ferias del Libro</p>
+                <div className="flex items-center gap-4">
+                    {/* Masticadores León Logo */}
+                    <img
+                        src="/logo.jpg"
+                        alt="Masticadores León Logo"
+                        className="h-12 w-12 rounded-full object-cover border-2 border-[#6366f1]/40 shadow-lg"
+                    />
+                    <div>
+                        <h1 className="text-xl font-extrabold text-white tracking-wide">Masticadores León</h1>
+                        <p className="text-sm text-[#94a3b8]">Gestión de Ferias del Libro</p>
+                    </div>
                 </div>
             </header>
 

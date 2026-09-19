@@ -5,6 +5,8 @@ import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import NewBookModal from '@/components/NewBookModal'
 import EditBookModal from '@/components/EditBookModal'
+import SellBookModal from '@/components/SellBookModal'
+import HistoryModal from '@/components/HistoryModal'
 
 // Type definition for a Book record
 type Book = {
@@ -22,7 +24,8 @@ type Book = {
 export default function BooksPage() {
     const params = useParams()
     const router = useRouter()
-    const fairId = params.fairId
+    const rawFairId = params?.fairId
+    const fairId: string = Array.isArray(rawFairId) ? rawFairId[0] : (rawFairId || '')
 
     // State management
     const [fairName, setFairName] = useState('')
@@ -30,11 +33,53 @@ export default function BooksPage() {
     const [books, setBooks] = useState<Book[]>([])
     const [loading, setLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)
+    const [showHistory, setShowHistory] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
+    const [sellingBook, setSellingBook] = useState<Book | null>(null)
     const [editingBook, setEditingBook] = useState<Book | null>(null)
     const [deletingBook, setDeletingBook] = useState<Book | null>(null)
     const [deleting, setDeleting] = useState(false)
     const [deleteError, setDeleteError] = useState<string | null>(null)
+    const [restockBook, setRestockBook] = useState<Book | null>(null)
+    const [addedStock, setAddedStock] = useState('5')
+    const [restocking, setRestocking] = useState(false)
+    const [restockError, setRestockError] = useState<string | null>(null)
+
+    // Restock handler to add stock units to a book
+    async function handleRestockSubmit() {
+        if (!restockBook) return
+        const qty = parseInt(addedStock)
+        if (isNaN(qty) || qty <= 0) return
+
+        setRestocking(true)
+        setRestockError(null)
+
+        const newStock = restockBook.stock + qty
+
+        const { error } = await supabase
+            .from('books')
+            .update({ stock: newStock })
+            .eq('id', restockBook.id)
+
+        if (error) {
+            console.error('Error adding stock:', error)
+            setRestockError(error.message || 'Error al actualizar el stock')
+            setRestocking(false)
+            return
+        }
+
+        // Record restock movement for audit history
+        await supabase.from('stock_movements').insert({
+            fair_id: Number(fairId),
+            book_id: restockBook.id,
+            quantity: qty,
+            movement_type: 'restock',
+        })
+
+        setRestocking(false)
+        setRestockBook(null)
+        loadData()
+    }
 
     // Delete handler for confirming book removal from Supabase
     async function confirmDeleteBook() {
@@ -86,10 +131,26 @@ export default function BooksPage() {
             .eq('fair_id', fairId)
             .order('created_at', { ascending: false })
 
+        // 3. Query 'sale_items' to compute total sold units dynamically per book
+        const { data: salesItemsData } = await supabase
+            .from('sale_items')
+            .select('book_id, quantity')
+
+        const soldMap: Record<number, number> = {}
+        if (salesItemsData) {
+            salesItemsData.forEach((item: any) => {
+                soldMap[item.book_id] = (soldMap[item.book_id] || 0) + (Number(item.quantity) || 0)
+            })
+        }
+
         if (error) {
             console.error('Error loading books:', error)
-        } else {
-            setBooks(booksData || [])
+        } else if (booksData) {
+            const booksWithSold = booksData.map(b => ({
+                ...b,
+                sold: soldMap[b.id] || 0,
+            }))
+            setBooks(booksWithSold)
         }
 
         setLoading(false)
@@ -129,8 +190,17 @@ export default function BooksPage() {
                         <p className="mt-1 text-sm text-[#94a3b8]">Gestión del catálogo de libros</p>
                     </div>
 
-                    {/* Right: Empty spacer for grid balance */}
-                    <div className="flex justify-end" />
+                    {/* Right: Masticadores León Logo & Brand */}
+                    <div className="flex items-center justify-end gap-3">
+                        <span className="hidden sm:inline text-xs font-bold text-[#94a3b8] uppercase tracking-wider">
+                            Masticadores León
+                        </span>
+                        <img
+                            src="/logo.jpg"
+                            alt="Masticadores León Logo"
+                            className="h-11 w-11 rounded-full object-cover border-2 border-[#6366f1]/40 shadow-md"
+                        />
+                    </div>
                 </div>
             </header>
 
@@ -199,13 +269,21 @@ export default function BooksPage() {
                                 />
                             </div>
 
-                            {/* Action Button */}
-                            <button
-                                onClick={() => setShowModal(true)}
-                                className="rounded-lg bg-[#6366f1] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#4f46e5] whitespace-nowrap shadow-sm"
-                            >
-                                + Añadir Libro
-                            </button>
+                            {/* Action Buttons */}
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setShowHistory(true)}
+                                    className="rounded-lg border border-[#334155] bg-[#0f172a] px-4 py-2 text-sm font-semibold text-[#818cf8] transition hover:bg-[#334155] hover:text-white whitespace-nowrap shadow-sm"
+                                >
+                                    📜 Historial
+                                </button>
+                                <button
+                                    onClick={() => setShowModal(true)}
+                                    className="rounded-lg bg-[#6366f1] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#4f46e5] whitespace-nowrap shadow-sm"
+                                >
+                                    + Añadir Libro
+                                </button>
+                            </div>
                         </div>
 
                         {/* Table Content */}
@@ -241,15 +319,35 @@ export default function BooksPage() {
                                                     {((book.price * (100 - discountPercentage)) / 100).toFixed(2)} €
                                                 </td>
                                                 <td className="px-6 py-4 text-center">
-                                                    <span className="inline-block rounded-md bg-[#0f172a] px-2.5 py-1 text-xs font-medium text-white">
-                                                        {book.stock}
-                                                    </span>
+                                                    <div className="flex items-center justify-center gap-1.5">
+                                                        <span className="inline-block rounded-md bg-[#0f172a] px-2.5 py-1 text-xs font-medium text-white">
+                                                            {book.stock}
+                                                        </span>
+                                                        <button
+                                                            onClick={() => {
+                                                                setRestockError(null)
+                                                                setAddedStock('5')
+                                                                setRestockBook(book)
+                                                            }}
+                                                            className="rounded-md bg-[#334155] px-1.5 py-0.5 text-xs font-bold text-white transition hover:bg-[#6366f1]"
+                                                            title="Añadir stock rápido"
+                                                        >
+                                                            +
+                                                        </button>
+                                                    </div>
                                                 </td>
                                                 <td className="px-6 py-4 font-semibold text-emerald-400 text-center">
                                                     {book.sold || 0}
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
                                                     <div className="flex items-center justify-end gap-2">
+                                                        <button
+                                                            onClick={() => setSellingBook(book)}
+                                                            className="inline-flex items-center gap-1 rounded-lg bg-emerald-600/20 px-2.5 py-1 text-xs font-bold text-emerald-400 border border-emerald-500/30 transition hover:bg-emerald-600 hover:text-white"
+                                                            title="Vender libro"
+                                                        >
+                                                            🛒 Vender
+                                                        </button>
                                                         <button
                                                             onClick={() => setEditingBook(book)}
                                                             className="rounded-lg p-1.5 text-[#94a3b8] transition hover:bg-[#334155] hover:text-white"
@@ -279,9 +377,29 @@ export default function BooksPage() {
             {/* Modal for adding a new book */}
             {showModal && fairId && (
                 <NewBookModal
-                    fairId={Array.isArray(fairId) ? fairId[0] : fairId}
+                    fairId={fairId}
                     onClose={() => setShowModal(false)}
                     onCreated={loadData}
+                />
+            )}
+
+            {/* Modal for history and audit */}
+            {showHistory && (
+                <HistoryModal
+                    fairId={fairId}
+                    fairName={fairName}
+                    books={books}
+                    onClose={() => setShowHistory(false)}
+                />
+            )}
+
+            {/* Modal for selling a book */}
+            {sellingBook && (
+                <SellBookModal
+                    book={sellingBook}
+                    discountPercentage={discountPercentage}
+                    onClose={() => setSellingBook(null)}
+                    onSold={loadData}
                 />
             )}
 
@@ -302,6 +420,12 @@ export default function BooksPage() {
                         <p className="mt-2 text-sm text-[#94a3b8]">
                             ¿Estás seguro de que deseas eliminar <strong className="text-white">&quot;{deletingBook.title}&quot;</strong>? Esta acción no se puede deshacer.
                         </p>
+                        {deleteError && (
+                            <div className="mt-3 rounded-lg bg-red-500/10 border border-red-500/30 p-3 text-xs text-red-400">
+                                {deleteError}
+                            </div>
+                        )}
+
                         <div className="mt-6 flex justify-end gap-3">
                             <button
                                 onClick={() => setDeletingBook(null)}
@@ -315,6 +439,73 @@ export default function BooksPage() {
                                 className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
                             >
                                 {deleting ? 'Eliminando...' : 'Eliminar'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Quick Restock Mini-modal */}
+            {restockBook && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="w-full max-w-sm rounded-2xl bg-[#1e293b] p-6 shadow-2xl border border-[#334155]">
+                        <h3 className="text-lg font-bold text-white">Añadir Stock</h3>
+                        <p className="mt-1 text-sm text-[#94a3b8]">
+                            Añadir unidades a <strong className="text-white">&quot;{restockBook.title}&quot;</strong> (Stock actual: {restockBook.stock})
+                        </p>
+
+                        {restockError && (
+                            <div className="mt-3 rounded-lg bg-red-500/10 border border-red-500/30 p-3 text-xs text-red-400">
+                                {restockError}
+                            </div>
+                        )}
+
+                        {/* Quick preset buttons */}
+                        <div className="mt-4 flex gap-2">
+                            {['1', '5', '10', '20'].map(val => (
+                                <button
+                                    key={val}
+                                    type="button"
+                                    onClick={() => setAddedStock(val)}
+                                    className={`flex-1 rounded-lg border py-1.5 text-xs font-semibold transition ${
+                                        addedStock === val
+                                            ? 'border-[#6366f1] bg-[#6366f1] text-white'
+                                            : 'border-[#334155] bg-[#0f172a] text-[#94a3b8] hover:text-white'
+                                    }`}
+                                >
+                                    +{val}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Custom Quantity input */}
+                        <div className="mt-4">
+                            <label className="mb-1 block text-xs text-[#94a3b8]">Cantidad a sumar</label>
+                            <input
+                                type="number"
+                                min="1"
+                                value={addedStock}
+                                onChange={e => setAddedStock(e.target.value)}
+                                className="w-full rounded-lg bg-[#0f172a] px-4 py-2.5 text-sm text-white outline-none ring-1 ring-[#334155] focus:ring-[#6366f1]"
+                            />
+                        </div>
+
+                        <div className="mt-6 flex justify-end gap-3">
+                            <button
+                                onClick={() => {
+                                    setRestockBook(null)
+                                    setRestockError(null)
+                                }}
+                                className="rounded-lg border border-[#334155] px-4 py-2 text-sm font-semibold text-[#94a3b8] transition hover:bg-[#334155] hover:text-white"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleRestockSubmit}
+                                disabled={restocking}
+                                className="rounded-lg bg-[#6366f1] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#4f46e5] disabled:opacity-50"
+                            >
+                                {restocking ? 'Guardando...' : `Añadir +${addedStock || 0}`}
                             </button>
                         </div>
                     </div>

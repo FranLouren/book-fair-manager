@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Book Fair Manager",
-  description: "Web application for managing book fair events",
+  title: "Feria Masticadores",
+  description: "Gestión de Ferias del Libro de Masticadores León",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
