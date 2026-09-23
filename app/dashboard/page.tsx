@@ -95,94 +95,137 @@ export default function DashboardPage() {
     }, [])
 
     return (
-        <div className="min-h-screen bg-[#0f172a]">
+        <div className="min-h-screen bg-[#f3f4f6] text-slate-900 font-sans">
 
             {/* Header navbar */}
-            <header className="border-b border-[#1e293b] bg-[#0f172a] px-8 py-5">
-                <div className="flex items-center gap-4">
-                    {/* Masticadores León Logo */}
+            <header className="border-b border-slate-200 bg-[#fafafa] px-6 py-6 shadow-xs">
+                <div className="mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-center gap-4 text-center">
                     <img
                         src="/logo.jpg"
                         alt="Masticadores León Logo"
-                        className="h-12 w-12 rounded-full object-cover border-2 border-[#6366f1]/40 shadow-lg"
+                        className="h-16 w-16 rounded-full object-cover border-2 border-slate-300 shadow-sm"
                     />
-                    <div>
-                        <h1 className="text-xl font-extrabold text-white tracking-wide">Masticadores León</h1>
-                        <p className="text-sm text-[#94a3b8]">Gestión de Ferias del Libro</p>
+                    <div className="text-center sm:text-left">
+                        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight leading-tight">Masticadores León</h1>
+                        <p className="text-sm font-semibold text-slate-500 mt-0.5">Gestión de Ferias del Libro</p>
                     </div>
                 </div>
             </header>
 
             {/* Main content area */}
-            <main className="p-8">
-                {/* Section header with action button */}
-                <div className="mb-6 flex items-center justify-between">
-                    <h2 className="text-2xl font-bold text-white">Ferias</h2>
+            <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+                
+                {/* Hero Header Banner */}
+                <div className="mb-8 rounded-2xl border border-slate-200 bg-[#fafafa] p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div>
+                        <div className="flex items-center gap-3">
+                            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Ferias de Libros</h2>
+                            {!loading && (
+                                <span className="rounded-full bg-slate-200/80 border border-slate-300 px-3 py-0.5 text-xs font-bold text-slate-700">
+                                    {fairs.length} {fairs.length === 1 ? 'feria' : 'ferias'}
+                                </span>
+                            )}
+                        </div>
+                        <p className="mt-1 text-sm font-medium text-slate-600">
+                            Administra tus ferias activas, catálogo de inventario y registros de ventas.
+                        </p>
+                    </div>
+
                     <button
                         onClick={() => setShowModal(true)}
-                        className="rounded-lg bg-[#6366f1] px-5 py-2.5 font-semibold text-white transition hover:bg-[#4f46e5]">
-                        + Nueva Feria
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 active:scale-[0.98] shrink-0">
+                        <span className="text-lg leading-none">+</span> Nueva Feria
                     </button>
                 </div>
 
                 {/* Loading state */}
                 {loading && (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
-                        <p className="text-[#94a3b8]">Cargando ferias...</p>
+                        <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-300 border-t-slate-800 mb-4"></div>
+                        <p className="text-slate-600 font-bold">Cargando ferias...</p>
                     </div>
                 )}
 
                 {/* Empty state */}
                 {!loading && fairs.length === 0 && (
-                    <div className="rounded-2xl border border-[#334155] bg-[#1e293b] p-16 text-center">
-                        <p className="text-4xl">📚</p>
-                        <p className="mt-4 text-lg font-medium text-white">No hay ferias todavía</p>
-                        <p className="mt-2 text-sm text-[#94a3b8]">
-                            Crea tu primera feria para empezar a gestionar libros y ventas
+                    <div className="rounded-2xl border border-slate-200 bg-[#fafafa] p-16 text-center shadow-xs">
+                        <p className="text-xl font-bold text-slate-900">No hay ferias registradas</p>
+                        <p className="mt-1 text-sm font-medium text-slate-500 max-w-md mx-auto">
+                            Crea tu primera feria para empezar a añadir libros, gestionar stock y registrar ventas.
                         </p>
+                        <button
+                            onClick={() => setShowModal(true)}
+                            className="mt-6 rounded-xl bg-slate-900 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800">
+                            + Crear Primera Feria
+                        </button>
                     </div>
                 )}
 
                 {/* Fairs list grid */}
                 {!loading && fairs.length > 0 && (
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                         {fairs.map(fair => (
                             <div
                                 key={fair.id}
                                 onClick={() => router.push(`/dashboard/${fair.id}/books`)}
-                                className="group relative cursor-pointer rounded-2xl border border-[#334155] bg-[#1e293b] p-6 transition hover:border-[#6366f1]">
-                                <div className="flex items-start justify-between gap-2">
-                                    <h3 className="text-lg font-bold text-white">{fair.name}</h3>
-                                    <div className="flex items-center gap-1">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation()
-                                                setEditingFair(fair)
-                                            }}
-                                            className="rounded-lg p-1 text-[#94a3b8] transition hover:bg-[#334155] hover:text-white"
-                                            title="Editar feria"
-                                        >
-                                            ✏️
-                                        </button>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation()
-                                                setDeleteError(null)
-                                                setDeletingFair(fair)
-                                            }}
-                                            className="rounded-lg p-1 text-[#94a3b8] transition hover:bg-red-500/20 hover:text-red-400"
-                                            title="Eliminar feria"
-                                        >
-                                            🗑️
-                                        </button>
+                                className="group cursor-pointer rounded-2xl border border-slate-200/90 bg-[#fafafa] shadow-xs transition-all duration-200 hover:border-slate-400 hover:shadow-md flex flex-col justify-between overflow-hidden">
+                                
+                                {/* Top Accent Bar */}
+                                <div className="h-1.5 w-full bg-slate-300 group-hover:bg-slate-600 transition-colors"></div>
+
+                                <div className="p-6">
+                                    {/* Card Header: Title & Actions */}
+                                    <div className="flex items-start justify-between gap-3 mb-4">
+                                        <h3 className="text-lg font-bold text-slate-900 group-hover:text-slate-700 transition-colors leading-snug">
+                                            {fair.name}
+                                        </h3>
+
+                                        <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+                                            <button
+                                                onClick={() => setEditingFair(fair)}
+                                                className="rounded-lg p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-200/70 transition"
+                                                title="Editar feria"
+                                            >
+                                                ✏️
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setDeleteError(null)
+                                                    setDeletingFair(fair)
+                                                }}
+                                                className="rounded-lg p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-100/70 transition"
+                                                title="Eliminar feria"
+                                            >
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Badges Info Section */}
+                                    <div className="flex flex-col gap-2.5 pt-3 border-t border-slate-200/60">
+                                        {fair.location && (
+                                            <div className="flex items-center gap-2 text-xs font-semibold text-slate-800">
+                                                <span className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-200/70 text-xs">📍</span>
+                                                <span>{fair.location}</span>
+                                            </div>
+                                        )}
+                                        
+                                        {fair.start_date && (
+                                            <div className="flex items-center gap-2 text-xs font-semibold text-slate-800">
+                                                <span className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-200/70 text-xs">📅</span>
+                                                <span>{fair.start_date} {fair.end_date ? ` al ${fair.end_date}` : ''}</span>
+                                            </div>
+                                        )}
+
+                                        {fair.discount_percentage !== undefined && (
+                                            <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
+                                                <span className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-200 text-xs">🏷️</span>
+                                                <span>{fair.discount_percentage}% Descuento aplicado</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-                                {fair.location && (
-                                    <p className="mt-1 text-sm text-[#94a3b8]">📍 {fair.location}</p>
-                                )}
-                                {fair.start_date && (
-                                    <p className="mt-1 text-sm text-[#94a3b8]">📅 {fair.start_date}</p>
-                                )}
+
                             </div>
                         ))}
                     </div>
@@ -208,14 +251,14 @@ export default function DashboardPage() {
 
             {/* Confirmation dialog for deleting a fair */}
             {deletingFair && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="w-full max-w-sm rounded-2xl bg-[#1e293b] p-6 shadow-2xl border border-[#334155]">
-                        <h3 className="text-lg font-bold text-white">¿Eliminar feria?</h3>
-                        <p className="mt-2 text-sm text-[#94a3b8]">
-                            ¿Estás seguro de que deseas eliminar <strong className="text-white">&quot;{deletingFair.name}&quot;</strong>? Se eliminarán también todos los libros pertenecientes a esta feria.
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
+                    <div className="w-full max-w-sm rounded-2xl bg-[#fafafa] p-6 shadow-xl border border-slate-200 text-slate-900">
+                        <h3 className="text-lg font-bold text-slate-900">¿Eliminar feria?</h3>
+                        <p className="mt-2 text-sm font-medium text-slate-600">
+                            ¿Estás seguro de que deseas eliminar <strong className="text-slate-900">&quot;{deletingFair.name}&quot;</strong>? Se eliminarán también todos los libros pertenecientes a esta feria.
                         </p>
                         {deleteError && (
-                            <div className="mt-3 rounded-lg bg-red-500/10 border border-red-500/30 p-3 text-xs text-red-400">
+                            <div className="mt-3 rounded-xl bg-red-50 border border-red-200 p-3 text-xs font-semibold text-red-700">
                                 {deleteError}
                             </div>
                         )}
@@ -225,14 +268,14 @@ export default function DashboardPage() {
                                     setDeletingFair(null)
                                     setDeleteError(null)
                                 }}
-                                className="rounded-lg border border-[#334155] px-4 py-2 text-sm font-semibold text-[#94a3b8] transition hover:bg-[#334155] hover:text-white"
+                                className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-200/60"
                             >
                                 Cancelar
                             </button>
                             <button
                                 onClick={confirmDeleteFair}
                                 disabled={deleting}
-                                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
+                                className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white shadow-xs transition hover:bg-red-700 disabled:opacity-50"
                             >
                                 {deleting ? 'Eliminando...' : 'Eliminar'}
                             </button>
@@ -243,4 +286,3 @@ export default function DashboardPage() {
         </div>
     )
 }
-

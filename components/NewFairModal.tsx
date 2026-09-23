@@ -44,30 +44,43 @@ export default function NewFairModal({ onClose, onCreated }: Props) {
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="w-full max-w-md rounded-2xl bg-[#1e293b] p-8 shadow-2xl border border-[#334155]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
+            <div className="w-full max-w-md rounded-2xl bg-[#fafafa] p-8 shadow-xl border border-slate-200 text-slate-900">
 
-                <h3 className="mb-6 text-xl font-bold text-white">Nueva Feria</h3>
+                <h3 className="mb-6 text-2xl font-extrabold text-slate-900 tracking-tight">Nueva Feria</h3>
 
                 <div className="flex flex-col gap-4">
-                    <input
-                        type="text"
-                        placeholder="Nombre de la feria *"
-                        value={name}
-                        onChange={e => setName(e.target.value)}
-                        required
-                        className="rounded-lg bg-[#0f172a] px-4 py-3 text-white placeholder-[#94a3b8] outline-none ring-1 ring-[#334155] focus:ring-[#6366f1]"
-                    />
-                    <input
-                        type="text"
-                        placeholder="Ubicación"
-                        value={location}
-                        onChange={e => setLocation(e.target.value)}
-                        className="rounded-lg bg-[#0f172a] px-4 py-3 text-white placeholder-[#94a3b8] outline-none ring-1 ring-[#334155] focus:ring-[#6366f1]"
-                    />
+                    <div>
+                        <label className="mb-1.5 block text-sm font-bold text-slate-800">
+                            Nombre de la feria *
+                        </label>
+                        <input
+                            type="text"
+                            placeholder="Ej. Feria del Libro de León 2026"
+                            value={name}
+                            onChange={e => setName(e.target.value)}
+                            required
+                            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 font-medium placeholder:text-slate-400 outline-none transition focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10"
+                        />
+                    </div>
 
                     <div>
-                        <label className="mb-1 block text-xs text-[#94a3b8]">Descuento de la feria (%) *</label>
+                        <label className="mb-1.5 block text-sm font-bold text-slate-800">
+                            Ubicación
+                        </label>
+                        <input
+                            type="text"
+                            placeholder="Ej. Plaza de Regla, León"
+                            value={location}
+                            onChange={e => setLocation(e.target.value)}
+                            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 font-medium placeholder:text-slate-400 outline-none transition focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="mb-1.5 block text-sm font-bold text-slate-800">
+                            Descuento de la feria (%) *
+                        </label>
                         <input
                             type="number"
                             min="0"
@@ -77,42 +90,46 @@ export default function NewFairModal({ onClose, onCreated }: Props) {
                             value={discountPercentage}
                             onChange={e => setDiscountPercentage(e.target.value)}
                             required
-                            className="w-full rounded-lg bg-[#0f172a] px-4 py-3 text-white placeholder-[#94a3b8] outline-none ring-1 ring-[#334155] focus:ring-[#6366f1]"
+                            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 font-medium placeholder:text-slate-400 outline-none transition focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10"
                         />
                     </div>
 
                     <div className="flex gap-4">
                         <div className="flex-1">
-                            <label className="mb-1 block text-xs text-[#94a3b8]">Fecha de inicio</label>
+                            <label className="mb-1.5 block text-sm font-bold text-slate-800">
+                                Fecha de inicio
+                            </label>
                             <input
                                 type="date"
                                 value={startDate}
                                 onChange={e => setStartDate(e.target.value)}
-                                className="w-full rounded-lg bg-[#0f172a] px-4 py-3 text-white outline-none ring-1 ring-[#334155] focus:ring-[#6366f1]"
+                                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 font-medium outline-none transition focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10"
                             />
                         </div>
                         <div className="flex-1">
-                            <label className="mb-1 block text-xs text-[#94a3b8]">Fecha de fin</label>
+                            <label className="mb-1.5 block text-sm font-bold text-slate-800">
+                                Fecha de fin
+                            </label>
                             <input
                                 type="date"
                                 value={endDate}
                                 onChange={e => setEndDate(e.target.value)}
-                                className="w-full rounded-lg bg-[#0f172a] px-4 py-3 text-white outline-none ring-1 ring-[#334155] focus:ring-[#6366f1]"
+                                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 font-medium outline-none transition focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10"
                             />
                         </div>
                     </div>
                 </div>
 
-                <div className="mt-6 flex gap-3">
+                <div className="mt-8 flex gap-3">
                     <button
                         onClick={onClose}
-                        className="flex-1 rounded-lg border border-[#334155] py-3 font-semibold text-[#94a3b8] transition hover:bg-[#334155]">
+                        className="flex-1 rounded-xl border border-slate-300 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-200/60">
                         Cancelar
                     </button>
                     <button
                         onClick={handleSubmit}
                         disabled={saving}
-                        className="flex-1 rounded-lg bg-[#6366f1] py-3 font-semibold text-white transition hover:bg-[#4f46e5] disabled:opacity-50">
+                        className="flex-1 rounded-xl bg-slate-900 py-3 text-sm font-bold text-white shadow-xs transition hover:bg-slate-800 disabled:opacity-50">
                         {saving ? 'Guardando...' : 'Crear Feria'}
                     </button>
                 </div>

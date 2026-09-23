@@ -63,42 +63,48 @@ export default function EditFairModal({ fair, onClose, onUpdated }: Props) {
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="w-full max-w-md rounded-2xl bg-[#1e293b] p-8 shadow-2xl border border-[#334155]">
-                <h3 className="mb-6 text-xl font-bold text-white">Editar Feria</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
+            <div className="w-full max-w-md rounded-2xl bg-[#fafafa] p-8 shadow-xl border border-slate-200 text-slate-900">
+                <h3 className="mb-6 text-2xl font-extrabold text-slate-900 tracking-tight">Editar Feria</h3>
 
                 {errorMsg && (
-                    <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/30 p-3 text-xs text-red-400">
+                    <div className="mb-4 rounded-xl bg-red-50 border border-red-200 p-3 text-sm font-semibold text-red-700">
                         {errorMsg}
                     </div>
                 )}
 
                 <div className="flex flex-col gap-4">
                     <div>
-                        <label className="mb-1 block text-xs text-[#94a3b8]">Nombre de la feria *</label>
+                        <label className="mb-1.5 block text-sm font-bold text-slate-800">
+                            Nombre de la feria *
+                        </label>
                         <input
                             type="text"
                             placeholder="Nombre de la feria"
                             value={name}
                             onChange={e => setName(e.target.value)}
                             required
-                            className="w-full rounded-lg bg-[#0f172a] px-4 py-3 text-white placeholder-[#94a3b8] outline-none ring-1 ring-[#334155] focus:ring-[#6366f1]"
+                            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 font-medium placeholder:text-slate-400 outline-none transition focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10"
                         />
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs text-[#94a3b8]">Ubicación</label>
+                        <label className="mb-1.5 block text-sm font-bold text-slate-800">
+                            Ubicación
+                        </label>
                         <input
                             type="text"
                             placeholder="Ubicación"
                             value={location}
                             onChange={e => setLocation(e.target.value)}
-                            className="w-full rounded-lg bg-[#0f172a] px-4 py-3 text-white placeholder-[#94a3b8] outline-none ring-1 ring-[#334155] focus:ring-[#6366f1]"
+                            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 font-medium placeholder:text-slate-400 outline-none transition focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10"
                         />
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs text-[#94a3b8]">Descuento de la feria (%) *</label>
+                        <label className="mb-1.5 block text-sm font-bold text-slate-800">
+                            Descuento de la feria (%) *
+                        </label>
                         <input
                             type="number"
                             min="0"
@@ -108,37 +114,41 @@ export default function EditFairModal({ fair, onClose, onUpdated }: Props) {
                             value={discountPercentage}
                             onChange={e => setDiscountPercentage(e.target.value)}
                             required
-                            className="w-full rounded-lg bg-[#0f172a] px-4 py-3 text-white placeholder-[#94a3b8] outline-none ring-1 ring-[#334155] focus:ring-[#6366f1]"
+                            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 font-medium placeholder:text-slate-400 outline-none transition focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10"
                         />
                     </div>
 
                     <div className="flex gap-4">
                         <div className="flex-1">
-                            <label className="mb-1 block text-xs text-[#94a3b8]">Fecha de inicio</label>
+                            <label className="mb-1.5 block text-sm font-bold text-slate-800">
+                                Fecha de inicio
+                            </label>
                             <input
                                 type="date"
                                 value={startDate}
                                 onChange={e => setStartDate(e.target.value)}
-                                className="w-full rounded-lg bg-[#0f172a] px-4 py-3 text-white outline-none ring-1 ring-[#334155] focus:ring-[#6366f1]"
+                                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 font-medium outline-none transition focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10"
                             />
                         </div>
                         <div className="flex-1">
-                            <label className="mb-1 block text-xs text-[#94a3b8]">Fecha de fin</label>
+                            <label className="mb-1.5 block text-sm font-bold text-slate-800">
+                                Fecha de fin
+                            </label>
                             <input
                                 type="date"
                                 value={endDate}
                                 onChange={e => setEndDate(e.target.value)}
-                                className="w-full rounded-lg bg-[#0f172a] px-4 py-3 text-white outline-none ring-1 ring-[#334155] focus:ring-[#6366f1]"
+                                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 font-medium outline-none transition focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10"
                             />
                         </div>
                     </div>
                 </div>
 
-                <div className="mt-6 flex justify-end gap-3">
+                <div className="mt-8 flex justify-end gap-3">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="rounded-lg border border-[#334155] px-4 py-2.5 text-sm font-semibold text-[#94a3b8] transition hover:bg-[#334155] hover:text-white"
+                        className="rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-200/60"
                     >
                         Cancelar
                     </button>
@@ -146,7 +156,7 @@ export default function EditFairModal({ fair, onClose, onUpdated }: Props) {
                         type="button"
                         onClick={handleSubmit}
                         disabled={saving}
-                        className="rounded-lg bg-[#6366f1] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#4f46e5] disabled:opacity-50"
+                        className="rounded-xl bg-slate-900 px-6 py-2.5 text-sm font-bold text-white shadow-xs transition hover:bg-slate-800 disabled:opacity-50"
                     >
                         {saving ? 'Guardando...' : 'Guardar Cambios'}
                     </button>
