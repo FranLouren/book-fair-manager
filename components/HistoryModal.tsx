@@ -34,7 +34,8 @@ type HistoryItem = {
     unit_price?: number
     total_price?: number
     payment_method?: 'efectivo' | 'bizum'
-    movement_type?: 'initial' | 'restock'
+    movement_type?: 'initial' | 'restock' | 'adjustment' | string
+    notes?: string | null
 }
 
 type SelectedFilter = {
@@ -60,6 +61,9 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
     const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false)
     const [activeFilter, setActiveFilter] = useState<SelectedFilter | null>(null)
 
+    // Secondary filters when an author is selected
+    const [selectedAuthorBookId, setSelectedAuthorBookId] = useState<string>('all')
+
     const [selectedShift, setSelectedShift] = useState<'all' | 'morning' | 'afternoon'>('all')
     const [selectedPayment, setSelectedPayment] = useState<'all' | 'efectivo' | 'bizum'>('all')
     const [selectedMovementType, setSelectedMovementType] = useState<'all' | 'sales' | 'stock'>('all')
@@ -71,14 +75,32 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
 
     const comboboxRef = useRef<HTMLDivElement>(null)
 
-    // Extract unique authors list from books catalog
+    // Persistent authors from authors table in Supabase
+    const [persistentAuthors, setPersistentAuthors] = useState<string[]>([])
+
+    useEffect(() => {
+        async function fetchPersistentAuthors() {
+            const { data } = await supabase.from('authors').select('name').order('name')
+            if (data) {
+                setPersistentAuthors(data.map((a: any) => a.name?.trim()).filter(Boolean))
+            }
+        }
+        fetchPersistentAuthors()
+    }, [])
+
+    // Extract complete unique authors list (from authors table, books catalog, and sales history)
     const uniqueAuthors = Array.from(
-        new Set(
-            books
-                .map(b => b.author?.trim())
-                .filter((a): a is string => Boolean(a && a.length > 0))
-        )
-    ).sort()
+        new Set([
+            ...persistentAuthors,
+            ...books.map(b => b.author?.trim()).filter((a): a is string => Boolean(a && a.length > 0)),
+            ...historyItems.map(i => i.book_author?.trim()).filter((a): a is string => Boolean(a && a.length > 0)),
+        ])
+    ).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }))
+
+    // Get books published by the currently selected author
+    const booksBySelectedAuthor = activeFilter && activeFilter.type === 'author'
+        ? books.filter(b => b.author?.toLowerCase() === String(activeFilter.value).toLowerCase())
+        : []
 
     async function loadHistory() {
         setLoading(true)
@@ -149,22 +171,23 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
         }
 
         if (stockData) {
-            stockData.forEach((m: any) => {
+            stockData.forEach((st: any) => {
                 unified.push({
-                    id: `stock-${m.id}`,
+                    id: `stock-${st.id}`,
                     type: 'stock',
-                    created_at: m.created_at,
-                    book_id: m.book_id,
-                    book_title: m.books?.title || `Libro #${m.book_id}`,
-                    book_author: m.books?.author || '',
-                    book_isbn: m.books?.isbn || '',
-                    quantity: m.quantity,
-                    movement_type: m.movement_type,
+                    created_at: st.created_at,
+                    book_id: st.book_id,
+                    book_title: st.books?.title || `Libro #${st.book_id}`,
+                    book_author: st.books?.author || '',
+                    book_isbn: st.books?.isbn || '',
+                    quantity: Number(st.quantity || 0),
+                    movement_type: st.movement_type,
+                    notes: st.notes || null,
                 })
             })
         }
 
-        // Sort descending by timestamp
+        // Sort all movements chronologically descending
         unified.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
         setHistoryItems(unified)
@@ -175,7 +198,12 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
         loadHistory()
     }, [fairId])
 
-    // Close dropdown on outside click
+    // Reset pagination to page 1 whenever any filter changes
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [activeFilter, selectedAuthorBookId, selectedShift, selectedPayment, selectedMovementType, selectedDate, pageSize])
+
+    // Click outside handler to close dropdown
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (comboboxRef.current && !comboboxRef.current.contains(event.target as Node)) {
@@ -186,30 +214,29 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
 
-    // Reset pagination to page 1 whenever any filter changes
-    useEffect(() => {
-        setCurrentPage(1)
-    }, [activeFilter, selectedShift, selectedPayment, selectedMovementType, selectedDate, pageSize])
+    // Filter matching authors for combobox
+    const matchingAuthors = searchInputValue.trim()
+        ? uniqueAuthors.filter(a => a.toLowerCase().includes(searchInputValue.toLowerCase()))
+        : uniqueAuthors
 
-    // Autocomplete matching options
-    const query = searchInputValue.toLowerCase().trim()
-    
-    const matchingAuthors = uniqueAuthors.filter(author =>
-        author.toLowerCase().includes(query)
-    )
+    // Filter matching books for combobox
+    const matchingBooks = searchInputValue.trim()
+        ? books.filter(b =>
+            b.title.toLowerCase().includes(searchInputValue.toLowerCase()) ||
+            (b.author && b.author.toLowerCase().includes(searchInputValue.toLowerCase())) ||
+            (b.isbn && b.isbn.toLowerCase().includes(searchInputValue.toLowerCase()))
+        )
+        : books
 
-    const matchingBooks = books.filter(book =>
-        book.title.toLowerCase().includes(query) ||
-        (book.isbn && book.isbn.toLowerCase().includes(query)) ||
-        (book.author && book.author.toLowerCase().includes(query))
-    )
-
-    // Filter history logic
+    // Apply all active filters to history items
     const filteredItems = historyItems.filter(item => {
-        // Active Combobox Filter (author vs book)
+        // 1. Author / Book Combobox Filter
         if (activeFilter) {
             if (activeFilter.type === 'author') {
                 if (item.book_author.toLowerCase() !== String(activeFilter.value).toLowerCase()) {
+                    return false
+                }
+                if (selectedAuthorBookId !== 'all' && item.book_id !== Number(selectedAuthorBookId)) {
                     return false
                 }
             } else if (activeFilter.type === 'book') {
@@ -219,31 +246,30 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
             }
         }
 
-        // Payment method filter
+        // 2. Shift Filter (Morning: 08:00–15:00, Afternoon: 15:00–23:59)
+        if (selectedShift !== 'all') {
+            const dt = new Date(item.created_at)
+            const hours = dt.getHours()
+            if (selectedShift === 'morning' && (hours < 8 || hours >= 15)) return false
+            if (selectedShift === 'afternoon' && hours < 15) return false
+        }
+
+        // 3. Payment Method Filter
         if (selectedPayment !== 'all') {
-            if (item.type !== 'sale' || item.payment_method !== selectedPayment) {
-                return false
-            }
+            if (item.type !== 'sale') return false
+            if (item.payment_method !== selectedPayment) return false
         }
 
-        // Movement type filter
-        if (selectedMovementType === 'sales' && item.type !== 'sale') return false
-        if (selectedMovementType === 'stock' && item.type !== 'stock') return false
+        // 4. Movement Type Filter
+        if (selectedMovementType !== 'all') {
+            if (selectedMovementType === 'sales' && item.type !== 'sale') return false
+            if (selectedMovementType === 'stock' && item.type !== 'stock') return false
+        }
 
-        // Date filter (Local Date)
-        const itemDate = new Date(item.created_at)
-        const hour = itemDate.getHours()
-
+        // 5. Date Filter (using local YYYY-MM-DD helper)
         if (selectedDate) {
-            const itemDateStr = getLocalDateString(itemDate)
-            if (itemDateStr !== selectedDate) return false
-        }
-
-        // Shift filter (Mañana vs Tarde)
-        if (selectedShift === 'morning') {
-            if (hour < 8 || hour >= 15) return false
-        } else if (selectedShift === 'afternoon') {
-            if (hour < 15) return false
+            const itemLocalDate = getLocalDateString(new Date(item.created_at))
+            if (itemLocalDate !== selectedDate) return false
         }
 
         return true
@@ -251,8 +277,6 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
 
     // Financial KPIs based on ALL filtered items
     const salesFiltered = filteredItems.filter(i => i.type === 'sale')
-    const stockFiltered = filteredItems.filter(i => i.type === 'stock')
-
     const totalRevenue = salesFiltered.reduce((acc, curr) => acc + (curr.total_price || 0), 0)
     
     const cashSales = salesFiltered.filter(i => i.payment_method === 'efectivo')
@@ -267,7 +291,9 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
     const remainingStock = activeFilter
         ? activeFilter.type === 'book'
             ? (books.find(b => b.id === Number(activeFilter.value))?.stock || 0)
-            : books.filter(b => b.author?.toLowerCase() === String(activeFilter.value).toLowerCase()).reduce((acc, b) => acc + (b.stock || 0), 0)
+            : selectedAuthorBookId !== 'all'
+                ? (books.find(b => b.id === Number(selectedAuthorBookId))?.stock || 0)
+                : books.filter(b => b.author?.toLowerCase() === String(activeFilter.value).toLowerCase()).reduce((acc, b) => acc + (b.stock || 0), 0)
         : books.reduce((acc, b) => acc + (b.stock || 0), 0)
 
     function selectAuthorFilter(authorName: string) {
@@ -276,6 +302,7 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
             value: authorName,
             label: `👤 Autor: ${authorName}`,
         })
+        setSelectedAuthorBookId('all')
         setSearchInputValue('')
         setIsDropdownOpen(false)
     }
@@ -286,17 +313,20 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
             value: book.id,
             label: `📚 Libro: ${book.title}`,
         })
+        setSelectedAuthorBookId('all')
         setSearchInputValue('')
         setIsDropdownOpen(false)
     }
 
     function clearActiveFilter() {
         setActiveFilter(null)
+        setSelectedAuthorBookId('all')
         setSearchInputValue('')
     }
 
     function resetFilters() {
         setActiveFilter(null)
+        setSelectedAuthorBookId('all')
         setSearchInputValue('')
         setSelectedShift('all')
         setSelectedPayment('all')
@@ -315,46 +345,64 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
     const paginatedItems = pageSize === 'all' ? filteredItems : filteredItems.slice(startIndex, endIndex)
 
     return (
-        <div className="fixed inset-0 z-50 flex flex-col bg-[#0f172a] text-white overflow-hidden p-3 sm:p-5">
-            {/* Ultra Compact Top Header */}
-            <div className="flex items-center justify-between border-b border-[#334155] pb-3">
+        <div className="fixed inset-0 z-50 flex flex-col bg-slate-50 text-slate-900 overflow-hidden p-3 sm:p-5 font-sans">
+            {/* Top Header */}
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
                 <div className="flex items-center gap-3">
-                    <h2 className="text-xl sm:text-2xl font-black text-white tracking-wide flex items-center gap-2">
+                    <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
                         <span>📜</span> Historial
                     </h2>
-                    <span className="rounded-full bg-[#6366f1]/20 px-3 py-0.5 text-xs font-bold text-[#a5b4fc] border border-[#6366f1]/30">
+                    <span className="rounded-full bg-slate-200 px-3 py-0.5 text-xs font-bold text-slate-800 border border-slate-300">
                         {fairName}
                     </span>
                 </div>
                 <button
                     onClick={resetFilters}
-                    className="flex items-center gap-1.5 rounded-xl border border-[#6366f1]/40 bg-[#6366f1]/20 px-4 py-2 text-xs font-bold text-[#a5b4fc] hover:bg-[#6366f1] hover:text-white transition shadow-md"
+                    className="flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-800 hover:bg-slate-100 transition shadow-xs"
                     title="Restablecer todos los filtros"
                 >
                     <span>🔄</span> Limpiar Filtros
                 </button>
             </div>
 
-            {/* Filter Toolbar with Interactive Combobox Selection */}
-            <div className="my-2.5 rounded-xl border border-[#334155] bg-[#1e293b] p-3 shadow-md">
+            {/* Filter Toolbar */}
+            <div className="my-2.5 rounded-xl border border-slate-200 bg-white p-3 shadow-xs">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-                    {/* Combobox Search & Select Input (Author or Book) */}
-                    <div ref={comboboxRef} className="relative">
-                        <label className="mb-1 block text-xs font-bold text-[#94a3b8]">
+                    {/* Combobox Search & Select Input */}
+                    <div ref={comboboxRef} className="relative flex flex-col justify-between">
+                        <label className="mb-1 block text-xs font-bold text-slate-700">
                             🔍 Título, autor o ISBN
                         </label>
 
                         {activeFilter ? (
-                            /* Active selection badge */
-                            <div className="flex items-center justify-between h-9 rounded-lg bg-[#6366f1]/20 px-3 border border-[#6366f1]/40">
-                                <span className="text-xs font-bold text-white truncate">{activeFilter.label}</span>
-                                <button
-                                    onClick={clearActiveFilter}
-                                    className="ml-2 text-xs text-[#a5b4fc] hover:text-white font-bold"
-                                    title="Quitar filtro"
-                                >
-                                    ✕
-                                </button>
+                            <div className="flex flex-col gap-1.5">
+                                {/* Active selection badge */}
+                                <div className="flex items-center justify-between h-9 rounded-xl bg-slate-100 px-3 border border-slate-300">
+                                    <span className="text-xs font-bold text-slate-900 truncate">{activeFilter.label}</span>
+                                    <button
+                                        onClick={clearActiveFilter}
+                                        className="ml-2 text-xs text-slate-600 hover:text-slate-900 font-bold"
+                                        title="Quitar filtro"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+
+                                {/* Secondary Book Selector if filtering by Author */}
+                                {activeFilter.type === 'author' && booksBySelectedAuthor.length > 0 && (
+                                    <select
+                                        value={selectedAuthorBookId}
+                                        onChange={e => setSelectedAuthorBookId(e.target.value)}
+                                        className="w-full h-8 rounded-lg bg-[#fafafa] px-2.5 text-xs font-bold text-slate-900 border border-slate-300 outline-none cursor-pointer"
+                                    >
+                                        <option value="all">📚 Todos los libros del autor ({booksBySelectedAuthor.length})</option>
+                                        {booksBySelectedAuthor.map(b => (
+                                            <option key={b.id} value={b.id}>
+                                                {b.title} (Stock: {b.stock})
+                                            </option>
+                                        ))}
+                                    </select>
+                                )}
                             </div>
                         ) : (
                             /* Search input */
@@ -368,16 +416,16 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
                                         setSearchInputValue(e.target.value)
                                         setIsDropdownOpen(true)
                                     }}
-                                    className="w-full h-9 rounded-lg bg-[#0f172a] px-3 text-sm font-medium text-white placeholder-[#64748b] outline-none ring-1 ring-[#334155] focus:ring-[#6366f1] transition"
+                                    className="w-full h-9 rounded-xl bg-[#fafafa] px-3 text-sm font-medium text-slate-900 placeholder:text-slate-400 outline-none border border-slate-300 focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10 transition"
                                 />
 
                                 {/* Auto-suggest Floating Options Dropdown */}
                                 {isDropdownOpen && (
-                                    <div className="absolute left-0 right-0 top-12 z-50 max-h-64 overflow-y-auto rounded-xl border border-[#334155] bg-[#0f172a] p-2 shadow-2xl">
+                                    <div className="absolute left-0 right-0 top-12 z-50 max-h-64 overflow-y-auto rounded-xl border border-slate-300 bg-white p-2 shadow-xl">
                                         {/* Section 1: Authors matching */}
                                         {matchingAuthors.length > 0 && (
                                             <div className="mb-2">
-                                                <div className="px-2 py-1 text-[10px] font-black text-[#94a3b8] uppercase tracking-wider">
+                                                <div className="px-2 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                                                     👤 Autores sugeridos ({matchingAuthors.length})
                                                 </div>
                                                 {matchingAuthors.map(author => (
@@ -385,10 +433,10 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
                                                         key={`author-${author}`}
                                                         type="button"
                                                         onClick={() => selectAuthorFilter(author)}
-                                                        className="flex items-center justify-between w-full rounded-lg px-3 py-2 text-xs font-bold text-emerald-400 hover:bg-[#1e293b] text-left transition"
+                                                        className="flex items-center justify-between w-full rounded-lg px-3 py-2 text-xs font-bold text-emerald-800 hover:bg-slate-100 text-left transition"
                                                     >
                                                         <span>👤 Todos los libros de: <strong>{author}</strong></span>
-                                                        <span className="text-[10px] text-[#94a3b8]">Ver autor</span>
+                                                        <span className="text-[10px] text-slate-500">Ver autor</span>
                                                     </button>
                                                 ))}
                                             </div>
@@ -397,7 +445,7 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
                                         {/* Section 2: Books matching */}
                                         {matchingBooks.length > 0 && (
                                             <div>
-                                                <div className="px-2 py-1 text-[10px] font-black text-[#94a3b8] uppercase tracking-wider">
+                                                <div className="px-2 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                                                     📚 Libros ({matchingBooks.length})
                                                 </div>
                                                 {matchingBooks.map(b => (
@@ -405,20 +453,20 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
                                                         key={`book-${b.id}`}
                                                         type="button"
                                                         onClick={() => selectBookFilter(b)}
-                                                        className="flex items-center justify-between w-full rounded-lg px-3 py-2 text-xs font-medium text-white hover:bg-[#1e293b] text-left transition"
+                                                        className="flex items-center justify-between w-full rounded-lg px-3 py-2 text-xs font-medium text-slate-900 hover:bg-slate-100 text-left transition"
                                                     >
                                                         <div>
                                                             <span className="font-bold">{b.title}</span>
-                                                            {b.author && <span className="text-[10px] text-[#94a3b8] block">{b.author}</span>}
+                                                            {b.author && <span className="text-[10px] text-slate-500 block">{b.author}</span>}
                                                         </div>
-                                                        <span className="text-[10px] text-amber-400 font-bold">Stock: {b.stock}</span>
+                                                        <span className="text-[10px] text-amber-800 font-bold">Stock: {b.stock}</span>
                                                     </button>
                                                 ))}
                                             </div>
                                         )}
 
                                         {matchingAuthors.length === 0 && matchingBooks.length === 0 && (
-                                            <div className="p-3 text-center text-xs text-[#94a3b8]">
+                                            <div className="p-3 text-center text-xs text-slate-500 font-medium">
                                                 No se encontraron autores o libros que coincidan con &quot;{searchInputValue}&quot;
                                             </div>
                                         )}
@@ -430,11 +478,11 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
 
                     {/* Shift Selector */}
                     <div>
-                        <label className="mb-1 block text-xs font-bold text-[#94a3b8]">🕒 Turno</label>
+                        <label className="mb-1 block text-xs font-bold text-slate-700">🕒 Turno</label>
                         <select
                             value={selectedShift}
                             onChange={e => setSelectedShift(e.target.value as any)}
-                            className="w-full h-9 rounded-lg bg-[#0f172a] px-3 text-sm font-medium text-white outline-none ring-1 ring-[#334155] focus:ring-[#6366f1]"
+                            className="w-full h-9 rounded-xl bg-[#fafafa] px-3 text-sm font-medium text-slate-900 outline-none border border-slate-300 focus:border-slate-800"
                         >
                             <option value="all">Todos los turnos</option>
                             <option value="morning">☀️ Mañana (08:00 - 15:00)</option>
@@ -444,11 +492,11 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
 
                     {/* Payment Method Selector */}
                     <div>
-                        <label className="mb-1 block text-xs font-bold text-[#94a3b8]">💳 Método Pago</label>
+                        <label className="mb-1 block text-xs font-bold text-slate-700">💳 Método Pago</label>
                         <select
                             value={selectedPayment}
                             onChange={e => setSelectedPayment(e.target.value as any)}
-                            className="w-full h-9 rounded-lg bg-[#0f172a] px-3 text-sm font-medium text-white outline-none ring-1 ring-[#334155] focus:ring-[#6366f1]"
+                            className="w-full h-9 rounded-xl bg-[#fafafa] px-3 text-sm font-medium text-slate-900 outline-none border border-slate-300 focus:border-slate-800"
                         >
                             <option value="all">Todos los métodos</option>
                             <option value="efectivo">💵 Solo Efectivo</option>
@@ -459,12 +507,12 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
                     {/* Date Picker */}
                     <div>
                         <div className="flex items-center justify-between mb-1">
-                            <label className="block text-xs font-bold text-[#94a3b8]">🗓️ Fecha</label>
+                            <label className="block text-xs font-bold text-slate-700">🗓️ Fecha</label>
                             {selectedDate && (
                                 <button
                                     type="button"
                                     onClick={() => setSelectedDate('')}
-                                    className="text-[10px] font-semibold text-[#818cf8] hover:underline"
+                                    className="text-[10px] font-bold text-slate-700 hover:underline"
                                 >
                                     Ver todas
                                 </button>
@@ -475,12 +523,12 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
                                 type="date"
                                 value={selectedDate}
                                 onChange={e => setSelectedDate(e.target.value)}
-                                className="flex-1 h-9 rounded-lg bg-[#0f172a] px-3 text-sm font-medium text-white outline-none ring-1 ring-[#334155] focus:ring-[#6366f1]"
+                                className="flex-1 h-9 rounded-xl bg-[#fafafa] px-3 text-sm font-medium text-slate-900 outline-none border border-slate-300 focus:border-slate-800"
                             />
                             <button
                                 type="button"
                                 onClick={() => setSelectedDate(getLocalDateString(new Date()))}
-                                className="h-9 rounded-lg border border-[#334155] bg-[#0f172a] px-3 text-xs font-bold text-[#cbd5e1] hover:text-white hover:bg-[#334155] transition"
+                                className="h-9 rounded-xl border border-slate-300 bg-slate-100 px-3 text-xs font-bold text-slate-800 hover:bg-slate-200 transition"
                             >
                                 Hoy
                             </button>
@@ -489,96 +537,96 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
                 </div>
             </div>
 
-            {/* Streamlined Compact KPI Banner */}
+            {/* Compact KPI Banner */}
             <div className="mb-3 grid grid-cols-2 sm:grid-cols-5 gap-2.5">
                 {/* Total Recaudado */}
-                <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2 flex flex-col justify-center">
-                    <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Total Recaudado</span>
-                    <div className="text-xl font-black text-emerald-400 leading-tight">
+                <div className="rounded-xl border border-emerald-300 bg-emerald-50 px-3.5 py-2 flex flex-col justify-center shadow-xs">
+                    <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Total Recaudado</span>
+                    <div className="text-xl font-extrabold text-emerald-800 leading-tight">
                         {totalRevenue.toFixed(2)} €
                     </div>
-                    <span className="text-[10px] text-emerald-300/70">{salesFiltered.length} ventas</span>
+                    <span className="text-[10px] text-emerald-700 font-medium">{salesFiltered.length} ventas</span>
                 </div>
 
                 {/* Cash Balance */}
-                <div className="rounded-xl border border-emerald-600/30 bg-[#1e293b] px-3.5 py-2 flex flex-col justify-center">
+                <div className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 flex flex-col justify-center shadow-xs">
                     <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider">💵 Efectivo</span>
-                        <span className="rounded bg-emerald-500/20 px-1.5 text-[10px] font-black text-emerald-400">
+                        <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">💵 Efectivo</span>
+                        <span className="rounded bg-emerald-100 px-1.5 text-[10px] font-extrabold text-emerald-800">
                             {totalRevenue > 0 ? ((cashRevenue / totalRevenue) * 100).toFixed(0) : 0}%
                         </span>
                     </div>
-                    <div className="text-lg font-black text-white leading-tight">
+                    <div className="text-lg font-extrabold text-slate-900 leading-tight">
                         {cashRevenue.toFixed(2)} €
                     </div>
-                    <span className="text-[10px] text-[#94a3b8]">{cashSales.length} cobros</span>
+                    <span className="text-[10px] text-slate-500 font-medium">{cashSales.length} cobros</span>
                 </div>
 
                 {/* Bizum Balance */}
-                <div className="rounded-xl border border-[#6366f1]/40 bg-[#1e293b] px-3.5 py-2 flex flex-col justify-center">
+                <div className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 flex flex-col justify-center shadow-xs">
                     <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider">📲 Bizum</span>
-                        <span className="rounded bg-[#6366f1]/20 px-1.5 text-[10px] font-black text-[#a5b4fc]">
+                        <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">📲 Bizum</span>
+                        <span className="rounded bg-slate-200 px-1.5 text-[10px] font-extrabold text-slate-900">
                             {totalRevenue > 0 ? ((bizumRevenue / totalRevenue) * 100).toFixed(0) : 0}%
                         </span>
                     </div>
-                    <div className="text-lg font-black text-white leading-tight">
+                    <div className="text-lg font-extrabold text-slate-900 leading-tight">
                         {bizumRevenue.toFixed(2)} €
                     </div>
-                    <span className="text-[10px] text-[#94a3b8]">{bizumSales.length} cobros</span>
+                    <span className="text-[10px] text-slate-500 font-medium">{bizumSales.length} cobros</span>
                 </div>
 
                 {/* Volume summary */}
-                <div className="rounded-xl border border-[#334155] bg-[#1e293b] px-3.5 py-2 flex flex-col justify-center">
-                    <span className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider">📚 Libros Vendidos</span>
-                    <div className="text-lg font-black text-white leading-tight">
-                        {totalUnitsSold} <span className="text-xs font-semibold text-[#94a3b8]">uds.</span>
+                <div className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 flex flex-col justify-center shadow-xs">
+                    <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">📚 Libros Vendidos</span>
+                    <div className="text-lg font-extrabold text-slate-900 leading-tight">
+                        {totalUnitsSold} <span className="text-xs font-medium text-slate-500">uds.</span>
                     </div>
-                    <span className="text-[10px] text-[#94a3b8]">en el periodo</span>
+                    <span className="text-[10px] text-slate-500 font-medium">en el periodo</span>
                 </div>
 
                 {/* Stock Restante Actual */}
-                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2 flex flex-col justify-center">
-                    <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">📦 Stock Restante</span>
-                    <div className="text-xl font-black text-amber-400 leading-tight">
-                        {remainingStock} <span className="text-xs font-normal text-amber-200">uds.</span>
+                <div className="rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-2 flex flex-col justify-center shadow-xs">
+                    <span className="text-[10px] font-bold text-amber-900 uppercase tracking-wider">📦 Stock Restante</span>
+                    <div className="text-xl font-extrabold text-amber-900 leading-tight">
+                        {remainingStock} <span className="text-xs font-normal text-amber-800">uds.</span>
                     </div>
-                    <span className="text-[10px] text-amber-300/70 truncate">
+                    <span className="text-[10px] text-amber-800 font-medium truncate">
                         {activeFilter ? activeFilter.label : 'en stand'}
                     </span>
                 </div>
             </div>
 
-            {/* Main Expanded Table Area - Takes max height */}
-            <div className="flex-1 overflow-hidden flex flex-col rounded-xl border border-[#334155] bg-[#1e293b] shadow-xl">
+            {/* Main Expanded Table Area */}
+            <div className="flex-1 overflow-hidden flex flex-col rounded-xl border border-slate-200 bg-[#fafafa] shadow-xs">
                 <div className="flex-1 overflow-y-auto p-2 sm:p-3">
                     {loading ? (
-                        <div className="py-16 text-center text-base text-[#94a3b8]">Cargando historial de movimientos...</div>
+                        <div className="py-16 text-center text-base text-slate-500 font-medium">Cargando historial de movimientos...</div>
                     ) : paginatedItems.length === 0 ? (
                         <div className="py-16 text-center">
-                            <p className="text-lg font-bold text-white">
+                            <p className="text-lg font-bold text-slate-900">
                                 {activeFilter ? `No se encontraron movimientos para ${activeFilter.label}` : 'No se encontraron movimientos con estos filtros'}
                             </p>
                             <button
                                 onClick={resetFilters}
-                                className="mt-4 rounded-xl bg-[#6366f1] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#4f46e5] transition shadow-md"
+                                className="mt-4 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-bold text-white hover:bg-slate-800 transition shadow-xs"
                             >
                                 Limpiar Filtros y Ver Todo
                             </button>
                         </div>
                     ) : (
-                        <div className="overflow-x-auto rounded-lg border border-[#334155]">
-                            <table className="w-full text-left text-sm text-white">
-                                <thead className="sticky top-0 z-10 border-b border-[#334155] bg-[#0f172a] text-xs font-black uppercase tracking-wider text-[#94a3b8]">
+                        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+                            <table className="w-full text-left text-sm text-slate-900">
+                                <thead className="sticky top-0 z-10 border-b border-slate-200 bg-slate-100 text-xs font-bold uppercase tracking-wider text-slate-700">
                                     <tr>
-                                        <th className="px-4 py-2.5">Fecha y Hora</th>
-                                        <th className="px-4 py-2.5">Libro / Autor</th>
-                                        <th className="px-4 py-2.5">Operación</th>
-                                        <th className="px-4 py-2.5 text-center">Unidades</th>
-                                        <th className="px-4 py-2.5 text-right">Importe</th>
+                                        <th className="px-4 py-3">Fecha y Hora</th>
+                                        <th className="px-4 py-3">Libro / Autor</th>
+                                        <th className="px-4 py-3">Operación</th>
+                                        <th className="px-4 py-3 text-center">Unidades</th>
+                                        <th className="px-4 py-3 text-right">Importe</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-[#334155]">
+                                <tbody className="divide-y divide-slate-200">
                                     {paginatedItems.map(item => {
                                         const dt = new Date(item.created_at)
                                         const dateStr = dt.toLocaleDateString('es-ES', {
@@ -593,19 +641,19 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
                                         })
 
                                         return (
-                                            <tr key={item.id} className="transition hover:bg-[#0f172a]/70">
+                                            <tr key={item.id} className="transition hover:bg-slate-50">
                                                 {/* Date & Time */}
-                                                <td className="px-4 py-2.5 font-mono whitespace-nowrap">
-                                                    <span className="text-white font-bold text-sm">{dateStr}</span>{' '}
-                                                    <span className="text-emerald-400 font-bold text-sm ml-1">{timeStr}</span>
+                                                <td className="px-4 py-3 font-mono whitespace-nowrap">
+                                                    <span className="text-slate-900 font-bold text-sm">{dateStr}</span>{' '}
+                                                    <span className="text-emerald-700 font-bold text-sm ml-1">{timeStr}</span>
                                                 </td>
 
                                                 {/* Book Title & Author & ISBN */}
-                                                <td className="px-4 py-2.5">
-                                                    <div className="font-bold text-white text-sm">{item.book_title}</div>
-                                                    <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#94a3b8] mt-0.5">
+                                                <td className="px-4 py-3">
+                                                    <div className="font-bold text-slate-900 text-sm">{item.book_title}</div>
+                                                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 mt-0.5 font-medium">
                                                         {item.book_author && (
-                                                            <span>Autor: <strong className="text-white">{item.book_author}</strong></span>
+                                                            <span>Autor: <strong className="text-slate-800">{item.book_author}</strong></span>
                                                         )}
                                                         {item.book_isbn && (
                                                             <span className="font-mono">ISBN: {item.book_isbn}</span>
@@ -614,49 +662,65 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
                                                 </td>
 
                                                 {/* Operation Badge */}
-                                                <td className="px-4 py-2.5">
-                                                    {item.type === 'sale' ? (
-                                                        item.payment_method === 'efectivo' ? (
-                                                            <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/20 px-2.5 py-1 font-extrabold text-emerald-400 border border-emerald-500/30 text-xs">
-                                                                💵 Venta en Efectivo
+                                                <td className="px-4 py-3">
+                                                    <div className="flex flex-col items-start gap-1">
+                                                        {item.type === 'sale' ? (
+                                                            item.payment_method === 'efectivo' ? (
+                                                                <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-100 px-2.5 py-1 font-bold text-emerald-900 border border-emerald-300 text-xs">
+                                                                    💵 Venta en Efectivo
+                                                                </span>
+                                                            ) : (
+                                                                <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-200 px-2.5 py-1 font-bold text-slate-900 border border-slate-300 text-xs">
+                                                                    📲 Venta por Bizum
+                                                                </span>
+                                                            )
+                                                        ) : item.movement_type === 'initial' ? (
+                                                            <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-100 px-2.5 py-1 font-bold text-amber-900 border border-amber-300 text-xs">
+                                                                📦 Stock Inicial
+                                                            </span>
+                                                        ) : item.movement_type === 'adjustment' || item.quantity < 0 ? (
+                                                            <span className="inline-flex items-center gap-1.5 rounded-lg bg-rose-100 px-2.5 py-1 font-bold text-rose-900 border border-rose-300 text-xs" title={item.notes ? `Motivo: ${item.notes}` : undefined}>
+                                                                🔻 Retirada de Stock
                                                             </span>
                                                         ) : (
-                                                            <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#6366f1]/20 px-2.5 py-1 font-extrabold text-[#a5b4fc] border border-[#6366f1]/40 text-xs">
-                                                                📲 Venta por Bizum
+                                                            <span className="inline-flex items-center gap-1.5 rounded-lg bg-blue-100 px-2.5 py-1 font-bold text-blue-900 border border-blue-300 text-xs" title={item.notes ? `Nota: ${item.notes}` : undefined}>
+                                                                🔄 Reposición de Stock
                                                             </span>
-                                                        )
-                                                    ) : item.movement_type === 'initial' ? (
-                                                        <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/20 px-2.5 py-1 font-bold text-amber-300 border border-amber-500/30 text-xs">
-                                                            📦 Stock Inicial
-                                                        </span>
-                                                    ) : (
-                                                        <span className="inline-flex items-center gap-1.5 rounded-lg bg-blue-500/20 px-2.5 py-1 font-bold text-blue-300 border border-blue-500/30 text-xs">
-                                                            🔄 Reposición de Stock
-                                                        </span>
-                                                    )}
+                                                        )}
+
+                                                        {item.notes && (
+                                                            <span className="text-[11px] font-medium text-slate-600 block max-w-[220px] truncate leading-tight" title={item.notes}>
+                                                                &quot;{item.notes}&quot;
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </td>
 
                                                 {/* Quantity */}
-                                                <td className="px-4 py-2.5 text-center">
+                                                <td className="px-4 py-3 text-center">
                                                     {item.type === 'sale' ? (
-                                                        <span className="rounded-md bg-red-500/20 px-2.5 py-0.5 font-black text-red-400 text-xs">
+                                                        <span className="rounded-md bg-red-100 px-2.5 py-0.5 font-extrabold text-red-700 text-xs border border-red-200">
                                                             -{item.quantity} ud.
                                                         </span>
+                                                    ) : item.quantity < 0 ? (
+                                                        <span className="rounded-md bg-rose-100 px-2.5 py-0.5 font-extrabold text-rose-700 text-xs border border-rose-200">
+                                                            {item.quantity} ud.
+                                                        </span>
                                                     ) : (
-                                                        <span className="rounded-md bg-emerald-500/20 px-2.5 py-0.5 font-black text-emerald-400 text-xs">
+                                                        <span className="rounded-md bg-emerald-100 px-2.5 py-0.5 font-extrabold text-emerald-800 text-xs border border-emerald-200">
                                                             +{item.quantity} ud.
                                                         </span>
                                                     )}
                                                 </td>
 
                                                 {/* Price / Total */}
-                                                <td className="px-4 py-2.5 text-right font-black font-mono text-base">
+                                                <td className="px-4 py-3 text-right font-black font-mono text-base">
                                                     {item.type === 'sale' ? (
-                                                        <span className="text-emerald-400">
+                                                        <span className="text-emerald-700">
                                                             +{item.total_price?.toFixed(2)} €
                                                         </span>
                                                     ) : (
-                                                        <span className="text-[#94a3b8]">-</span>
+                                                        <span className="text-slate-400">-</span>
                                                     )}
                                                 </td>
                                             </tr>
@@ -669,25 +733,27 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
                 </div>
 
                 {/* Modal Footer Bar with Pagination Controls */}
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-[#334155] bg-[#0f172a] px-4 py-2.5">
-                    {/* Item count text */}
-                    <span className="text-xs font-semibold text-[#cbd5e1]">
-                        Mostrando <strong className="text-white">{filteredItems.length > 0 ? startIndex + 1 : 0}</strong> a <strong className="text-white">{endIndex}</strong> de <strong className="text-white">{filteredItems.length}</strong> movimientos
-                    </span>
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-200 bg-white px-6 py-3">
+                    {/* Left: Item count text */}
+                    <div className="sm:w-1/3 text-left">
+                        <span className="text-xs font-bold text-slate-600">
+                            Mostrando <strong className="text-slate-900">{filteredItems.length > 0 ? startIndex + 1 : 0}-{endIndex}</strong> de <strong className="text-slate-900">{filteredItems.length}</strong> movimientos
+                        </span>
+                    </div>
 
-                    {/* Pagination Page Size and Navigation Controls */}
-                    <div className="flex items-center gap-4">
+                    {/* Center: Pagination Controls */}
+                    <div className="sm:w-1/3 flex items-center justify-center gap-4">
                         {/* Page Size Selector */}
-                        <div className="flex items-center gap-1.5 text-xs text-[#cbd5e1]">
-                            <span className="font-medium">Mostrar:</span>
+                        <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                            <span className="font-bold">Mostrar:</span>
                             <select
                                 value={pageSize}
                                 onChange={e => setPageSize(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-                                className="rounded-lg bg-[#1e293b] px-2.5 py-1 text-xs font-bold text-white border border-[#334155] outline-none"
+                                className="rounded-xl bg-[#fafafa] px-3 py-1 text-xs font-bold text-slate-900 border border-slate-300 outline-none cursor-pointer"
                             >
-                                <option value={20}>20 por pág.</option>
-                                <option value={50}>50 por pág.</option>
-                                <option value={100}>100 por pág.</option>
+                                <option value={20}>20</option>
+                                <option value={50}>50</option>
+                                <option value={100}>100</option>
                                 <option value="all">Todos ({filteredItems.length})</option>
                             </select>
                         </div>
@@ -699,29 +765,33 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
                                     type="button"
                                     disabled={validCurrentPage <= 1}
                                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                    className="rounded-lg border border-[#334155] bg-[#1e293b] px-3 py-1 text-xs font-bold text-white hover:bg-[#334155] transition disabled:opacity-30 disabled:hover:bg-[#1e293b]"
+                                    className="rounded-xl border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold text-slate-800 hover:bg-slate-100 transition disabled:opacity-30"
+                                    title="Página anterior"
                                 >
-                                    ← Anterior
+                                    ←
                                 </button>
-                                <span className="text-xs font-bold text-white whitespace-nowrap">
-                                    Pág. {validCurrentPage} de {totalPages}
+                                <span className="text-xs font-bold text-slate-900 whitespace-nowrap">
+                                    {validCurrentPage} / {totalPages}
                                 </span>
                                 <button
                                     type="button"
                                     disabled={validCurrentPage >= totalPages}
                                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                    className="rounded-lg border border-[#334155] bg-[#1e293b] px-3 py-1 text-xs font-bold text-white hover:bg-[#334155] transition disabled:opacity-30 disabled:hover:bg-[#1e293b]"
+                                    className="rounded-xl border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold text-slate-800 hover:bg-slate-100 transition disabled:opacity-30"
+                                    title="Página siguiente"
                                 >
-                                    Siguiente →
+                                    →
                                 </button>
                             </div>
                         )}
+                    </div>
 
-                        {/* Close Button */}
+                    {/* Right: Close Button */}
+                    <div className="sm:w-1/3 text-right">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="rounded-lg bg-[#334155] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#475569] transition ml-2"
+                            className="rounded-xl bg-slate-900 px-5 py-2 text-xs font-bold text-white hover:bg-slate-800 transition shadow-xs"
                         >
                             Cerrar Historial
                         </button>

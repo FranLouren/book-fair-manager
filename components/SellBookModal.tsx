@@ -81,7 +81,7 @@ export default function SellBookModal({ book, discountPercentage, onClose, onSol
             }
         }
 
-        // 2. Update stock in 'books' table
+        // 3. Update stock in 'books' table
         const newStock = Math.max(0, book.stock - qtyNum)
 
         const { error: updateError } = await supabase
@@ -102,29 +102,36 @@ export default function SellBookModal({ book, discountPercentage, onClose, onSol
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="w-full max-w-md rounded-2xl bg-[#1e293b] p-8 shadow-2xl border border-[#334155]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
+            <div className="w-full max-w-md rounded-2xl bg-[#fafafa] p-8 shadow-xl border border-slate-200 text-slate-900">
                 <div className="mb-6 flex items-center justify-between">
-                    <h3 className="text-xl font-bold text-white">🛒 Registrar Venta</h3>
-                    <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400 border border-emerald-500/20">
+                    <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight">🛒 Registrar Venta</h3>
+                    <span className="rounded-full bg-emerald-100 border border-emerald-300 px-3 py-1 text-xs font-bold text-emerald-800">
                         {discountPercentage}% Dto. Feria
                     </span>
                 </div>
 
+                {book.stock <= 0 && (
+                    <div className="mb-4 rounded-xl bg-amber-50 border border-amber-300 p-4 text-sm font-extrabold text-amber-900 flex items-center gap-2.5 shadow-xs">
+                        <span className="text-xl">⚠️</span>
+                        <span>No hay stock disponible de este libro.</span>
+                    </div>
+                )}
+
                 {errorMsg && (
-                    <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/30 p-3 text-xs text-red-400">
+                    <div className="mb-4 rounded-xl bg-red-50 border border-red-200 p-3 text-xs text-red-700 font-semibold">
                         {errorMsg}
                     </div>
                 )}
 
                 {/* Book Details Summary */}
-                <div className="mb-6 rounded-xl bg-[#0f172a] p-4 border border-[#334155]">
-                    <h4 className="font-bold text-white text-base">{book.title}</h4>
-                    {book.author && <p className="text-xs text-[#94a3b8] mt-0.5">{book.author}</p>}
-                    <div className="mt-3 flex items-center justify-between border-t border-[#1e293b] pt-3 text-xs">
-                        <span className="text-[#94a3b8]">Precio original: <span className="line-through">{book.price.toFixed(2)} €</span></span>
-                        <span className="text-[#94a3b8]">Precio Feria: <strong className="text-emerald-400 text-sm">{unitPrice.toFixed(2)} €</strong></span>
-                        <span className="text-[#94a3b8]">Stock: <strong className="text-white">{book.stock}</strong></span>
+                <div className="mb-6 rounded-xl bg-white p-4 border border-slate-200/90 shadow-xs">
+                    <h4 className="font-bold text-slate-900 text-base">{book.title}</h4>
+                    {book.author && <p className="text-xs text-slate-600 font-medium mt-0.5">{book.author}</p>}
+                    <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 text-xs">
+                        <span className="text-slate-500 font-medium">Precio original: <span className="line-through">{book.price.toFixed(2)} €</span></span>
+                        <span className="text-slate-500 font-medium">Precio Feria: <strong className="text-emerald-700 text-sm">{unitPrice.toFixed(2)} €</strong></span>
+                        <span className="text-slate-500 font-medium">Stock: <strong className="text-slate-900 font-bold">{book.stock}</strong></span>
                     </div>
                 </div>
 
@@ -132,17 +139,17 @@ export default function SellBookModal({ book, discountPercentage, onClose, onSol
                 <div className="flex flex-col gap-5">
                     {/* Quantity Selector */}
                     <div>
-                        <label className="mb-2 block text-xs font-medium text-[#94a3b8]">Cantidad a vender *</label>
+                        <label className="mb-2 block text-sm font-bold text-slate-800">Cantidad a vender *</label>
                         <div className="flex items-center gap-2">
                             {['1', '2', '3'].map(num => (
                                 <button
                                     key={num}
                                     type="button"
                                     onClick={() => setQuantity(num)}
-                                    className={`flex-1 rounded-lg border py-2 text-sm font-semibold transition ${
+                                    className={`flex-1 rounded-xl border py-2.5 text-sm font-bold transition ${
                                         quantity === num
-                                            ? 'border-[#6366f1] bg-[#6366f1] text-white'
-                                            : 'border-[#334155] bg-[#0f172a] text-[#94a3b8] hover:text-white'
+                                            ? 'border-slate-900 bg-slate-900 text-white'
+                                            : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
                                     }`}
                                 >
                                     {num} {num === '1' ? 'libro' : 'libros'}
@@ -154,22 +161,22 @@ export default function SellBookModal({ book, discountPercentage, onClose, onSol
                                 max={book.stock}
                                 value={quantity}
                                 onChange={e => setQuantity(e.target.value)}
-                                className="w-20 rounded-lg bg-[#0f172a] px-3 py-2 text-center text-sm font-bold text-white outline-none ring-1 ring-[#334155] focus:ring-[#6366f1]"
+                                className="w-20 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-center text-sm font-bold text-slate-900 outline-none transition focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10"
                             />
                         </div>
                     </div>
 
                     {/* Payment Method Selector (Efectivo vs Bizum) */}
                     <div>
-                        <label className="mb-2 block text-xs font-medium text-[#94a3b8]">Método de Pago *</label>
+                        <label className="mb-2 block text-sm font-bold text-slate-800">Método de Pago *</label>
                         <div className="grid grid-cols-2 gap-3">
                             <button
                                 type="button"
                                 onClick={() => setPaymentMethod('efectivo')}
                                 className={`flex items-center justify-center gap-2 rounded-xl border p-4 text-sm font-bold transition ${
                                     paymentMethod === 'efectivo'
-                                        ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400 ring-2 ring-emerald-500/30'
-                                        : 'border-[#334155] bg-[#0f172a] text-[#94a3b8] hover:text-white'
+                                        ? 'border-emerald-600 bg-emerald-50 text-emerald-900 ring-2 ring-emerald-500/20'
+                                        : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
                                 }`}
                             >
                                 <span className="text-xl">💵</span>
@@ -181,8 +188,8 @@ export default function SellBookModal({ book, discountPercentage, onClose, onSol
                                 onClick={() => setPaymentMethod('bizum')}
                                 className={`flex items-center justify-center gap-2 rounded-xl border p-4 text-sm font-bold transition ${
                                     paymentMethod === 'bizum'
-                                        ? 'border-[#6366f1] bg-[#6366f1]/10 text-[#6366f1] ring-2 ring-[#6366f1]/30'
-                                        : 'border-[#334155] bg-[#0f172a] text-[#94a3b8] hover:text-white'
+                                        ? 'border-slate-900 bg-slate-900 text-white ring-2 ring-slate-800/20'
+                                        : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
                                 }`}
                             >
                                 <span className="text-xl">📲</span>
@@ -192,9 +199,9 @@ export default function SellBookModal({ book, discountPercentage, onClose, onSol
                     </div>
 
                     {/* Total Price Display */}
-                    <div className="flex items-center justify-between rounded-xl bg-[#0f172a] px-5 py-4 border border-[#334155]">
-                        <span className="text-sm font-semibold text-[#94a3b8]">Total a cobrar:</span>
-                        <span className="text-2xl font-extrabold text-white">
+                    <div className="flex items-center justify-between rounded-xl bg-white px-5 py-4 border border-slate-300 shadow-xs">
+                        <span className="text-sm font-bold text-slate-700">Total a cobrar:</span>
+                        <span className="text-2xl font-black text-slate-900">
                             {totalPrice.toFixed(2)} €
                         </span>
                     </div>
@@ -205,7 +212,7 @@ export default function SellBookModal({ book, discountPercentage, onClose, onSol
                     <button
                         type="button"
                         onClick={onClose}
-                        className="flex-1 rounded-lg border border-[#334155] py-3 text-sm font-semibold text-[#94a3b8] transition hover:bg-[#334155] hover:text-white"
+                        className="flex-1 rounded-xl border border-slate-300 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-200/60"
                     >
                         Cancelar
                     </button>
@@ -213,7 +220,7 @@ export default function SellBookModal({ book, discountPercentage, onClose, onSol
                         type="button"
                         onClick={handleConfirmSale}
                         disabled={selling || book.stock < 1}
-                        className="flex-1 rounded-lg bg-emerald-600 py-3 text-sm font-bold text-white transition hover:bg-emerald-500 disabled:opacity-50 shadow-lg shadow-emerald-900/30"
+                        className="flex-1 rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:opacity-50 shadow-sm"
                     >
                         {selling ? 'Registrando...' : 'Confirmar Venta'}
                     </button>
