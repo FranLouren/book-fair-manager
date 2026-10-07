@@ -65,8 +65,7 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
     const [selectedAuthorBookId, setSelectedAuthorBookId] = useState<string>('all')
 
     const [selectedShift, setSelectedShift] = useState<'all' | 'morning' | 'afternoon'>('all')
-    const [selectedPayment, setSelectedPayment] = useState<'all' | 'efectivo' | 'bizum'>('all')
-    const [selectedMovementType, setSelectedMovementType] = useState<'all' | 'sales' | 'stock'>('all')
+    const [categoryFilter, setCategoryFilter] = useState<'all' | 'efectivo' | 'bizum' | 'sales' | 'stock'>('all')
     const [selectedDate, setSelectedDate] = useState<string>('')
 
     // Pagination state
@@ -201,7 +200,7 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
     // Reset pagination to page 1 whenever any filter changes
     useEffect(() => {
         setCurrentPage(1)
-    }, [activeFilter, selectedAuthorBookId, selectedShift, selectedPayment, selectedMovementType, selectedDate, pageSize])
+    }, [activeFilter, selectedAuthorBookId, selectedShift, categoryFilter, selectedDate, pageSize])
 
     // Click outside handler to close dropdown
     useEffect(() => {
@@ -228,8 +227,8 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
         )
         : books
 
-    // Apply all active filters to history items
-    const filteredItems = historyItems.filter(item => {
+    // Base filtered items (filtered by author/book, shift, date)
+    const baseFilteredItems = historyItems.filter(item => {
         // 1. Author / Book Combobox Filter
         if (activeFilter) {
             if (activeFilter.type === 'author') {
@@ -254,19 +253,7 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
             if (selectedShift === 'afternoon' && hours < 15) return false
         }
 
-        // 3. Payment Method Filter
-        if (selectedPayment !== 'all') {
-            if (item.type !== 'sale') return false
-            if (item.payment_method !== selectedPayment) return false
-        }
-
-        // 4. Movement Type Filter
-        if (selectedMovementType !== 'all') {
-            if (selectedMovementType === 'sales' && item.type !== 'sale') return false
-            if (selectedMovementType === 'stock' && item.type !== 'stock') return false
-        }
-
-        // 5. Date Filter (using local YYYY-MM-DD helper)
+        // 3. Date Filter (using local YYYY-MM-DD helper)
         if (selectedDate) {
             const itemLocalDate = getLocalDateString(new Date(item.created_at))
             if (itemLocalDate !== selectedDate) return false
@@ -275,8 +262,9 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
         return true
     })
 
-    // Financial KPIs based on ALL filtered items
-    const salesFiltered = filteredItems.filter(i => i.type === 'sale')
+    // Financial KPIs based on baseFilteredItems
+    const salesFiltered = baseFilteredItems.filter(i => i.type === 'sale')
+    const stockFiltered = baseFilteredItems.filter(i => i.type === 'stock')
     const totalRevenue = salesFiltered.reduce((acc, curr) => acc + (curr.total_price || 0), 0)
     
     const cashSales = salesFiltered.filter(i => i.payment_method === 'efectivo')
@@ -286,6 +274,24 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
     const bizumRevenue = bizumSales.reduce((acc, curr) => acc + (curr.total_price || 0), 0)
 
     const totalUnitsSold = salesFiltered.reduce((acc, curr) => acc + curr.quantity, 0)
+    const totalStockMovementsCount = stockFiltered.length
+
+    // Final filtered items for table list based on selected category card
+    const filteredItems = baseFilteredItems.filter(item => {
+        if (categoryFilter === 'efectivo') {
+            return item.type === 'sale' && item.payment_method === 'efectivo'
+        }
+        if (categoryFilter === 'bizum') {
+            return item.type === 'sale' && item.payment_method === 'bizum'
+        }
+        if (categoryFilter === 'sales') {
+            return item.type === 'sale'
+        }
+        if (categoryFilter === 'stock') {
+            return item.type === 'stock'
+        }
+        return true
+    })
 
     // Calculate remaining stock currently available in inventory
     const remainingStock = activeFilter
@@ -329,8 +335,7 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
         setSelectedAuthorBookId('all')
         setSearchInputValue('')
         setSelectedShift('all')
-        setSelectedPayment('all')
-        setSelectedMovementType('all')
+        setCategoryFilter('all')
         setSelectedDate('')
         setPageSize(20)
         setCurrentPage(1)
@@ -367,7 +372,7 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
 
             {/* Filter Toolbar */}
             <div className="my-2.5 rounded-xl border border-slate-200 bg-white p-3 shadow-xs">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {/* Combobox Search & Select Input */}
                     <div ref={comboboxRef} className="relative flex flex-col justify-between">
                         <label className="mb-1 block text-xs font-bold text-slate-700">
@@ -490,20 +495,6 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
                         </select>
                     </div>
 
-                    {/* Payment Method Selector */}
-                    <div>
-                        <label className="mb-1 block text-xs font-bold text-slate-700">💳 Método Pago</label>
-                        <select
-                            value={selectedPayment}
-                            onChange={e => setSelectedPayment(e.target.value as any)}
-                            className="w-full h-9 rounded-xl bg-[#fafafa] px-3 text-sm font-medium text-slate-900 outline-none border border-slate-300 focus:border-slate-800"
-                        >
-                            <option value="all">Todos los métodos</option>
-                            <option value="efectivo">💵 Solo Efectivo</option>
-                            <option value="bizum">📲 Solo Bizum</option>
-                        </select>
-                    </div>
-
                     {/* Date Picker */}
                     <div>
                         <div className="flex items-center justify-between mb-1">
@@ -537,64 +528,125 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
                 </div>
             </div>
 
-            {/* Compact KPI Banner */}
+            {/* Interactive KPI Filter Cards */}
             <div className="mb-3 grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-                {/* Total Recaudado */}
-                <div className="rounded-xl border border-emerald-300 bg-emerald-50 px-3.5 py-2 flex flex-col justify-center shadow-xs">
-                    <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Total Recaudado</span>
-                    <div className="text-xl font-extrabold text-emerald-800 leading-tight">
+                {/* Total Recaudado (Card 1: Ver Todo) */}
+                <button
+                    type="button"
+                    onClick={() => setCategoryFilter('all')}
+                    className={`rounded-xl border p-3 flex flex-col justify-between text-left transition shadow-xs cursor-pointer ${
+                        categoryFilter === 'all'
+                            ? 'border-emerald-600 bg-emerald-50 ring-2 ring-emerald-500/20'
+                            : 'border-slate-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/40'
+                    }`}
+                >
+                    <div className="flex items-center justify-between w-full">
+                        <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Total Recaudado</span>
+                        {categoryFilter === 'all' && (
+                            <span className="rounded-full bg-emerald-700 px-1.5 py-0.2 text-[9px] font-extrabold text-white">✓ Todos</span>
+                        )}
+                    </div>
+                    <div className="text-xl font-extrabold text-emerald-800 leading-tight mt-1">
                         {totalRevenue.toFixed(2)} €
                     </div>
-                    <span className="text-[10px] text-emerald-700 font-medium">{salesFiltered.length} ventas</span>
-                </div>
+                    <span className="text-[10px] text-emerald-700 font-medium mt-0.5">{salesFiltered.length} ventas</span>
+                </button>
 
-                {/* Cash Balance */}
-                <div className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 flex flex-col justify-center shadow-xs">
-                    <div className="flex items-center justify-between">
+                {/* Cash Balance (Card 2: Solo Efectivo) */}
+                <button
+                    type="button"
+                    onClick={() => setCategoryFilter(c => c === 'efectivo' ? 'all' : 'efectivo')}
+                    className={`rounded-xl border p-3 flex flex-col justify-between text-left transition shadow-xs cursor-pointer ${
+                        categoryFilter === 'efectivo'
+                            ? 'border-emerald-600 bg-emerald-50 ring-2 ring-emerald-500/30'
+                            : 'border-slate-200 bg-white hover:border-emerald-300 hover:bg-slate-50'
+                    }`}
+                >
+                    <div className="flex items-center justify-between w-full">
                         <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">💵 Efectivo</span>
-                        <span className="rounded bg-emerald-100 px-1.5 text-[10px] font-extrabold text-emerald-800">
+                        <span className={`rounded px-1.5 text-[10px] font-extrabold ${categoryFilter === 'efectivo' ? 'bg-emerald-700 text-white' : 'bg-emerald-100 text-emerald-800'}`}>
                             {totalRevenue > 0 ? ((cashRevenue / totalRevenue) * 100).toFixed(0) : 0}%
                         </span>
                     </div>
-                    <div className="text-lg font-extrabold text-slate-900 leading-tight">
+                    <div className="text-lg font-extrabold text-slate-900 leading-tight mt-1">
                         {cashRevenue.toFixed(2)} €
                     </div>
-                    <span className="text-[10px] text-slate-500 font-medium">{cashSales.length} cobros</span>
-                </div>
+                    <span className="text-[10px] text-slate-500 font-medium mt-0.5">
+                        {cashSales.length} cobros {categoryFilter === 'efectivo' ? '(filtrado)' : ''}
+                    </span>
+                </button>
 
-                {/* Bizum Balance */}
-                <div className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 flex flex-col justify-center shadow-xs">
-                    <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">📲 Bizum</span>
-                        <span className="rounded bg-slate-200 px-1.5 text-[10px] font-extrabold text-slate-900">
+                {/* Bizum Balance (Card 3: Solo Bizum) */}
+                <button
+                    type="button"
+                    onClick={() => setCategoryFilter(c => c === 'bizum' ? 'all' : 'bizum')}
+                    className={`rounded-xl border p-3 flex flex-col justify-between text-left transition shadow-xs cursor-pointer ${
+                        categoryFilter === 'bizum'
+                            ? 'border-slate-900 bg-slate-900 text-white ring-2 ring-slate-800/30'
+                            : 'border-slate-200 bg-white hover:border-slate-400 hover:bg-slate-50'
+                    }`}
+                >
+                    <div className="flex items-center justify-between w-full">
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${categoryFilter === 'bizum' ? 'text-slate-200' : 'text-slate-700'}`}>📲 Bizum</span>
+                        <span className={`rounded px-1.5 text-[10px] font-extrabold ${categoryFilter === 'bizum' ? 'bg-white text-slate-900' : 'bg-slate-200 text-slate-900'}`}>
                             {totalRevenue > 0 ? ((bizumRevenue / totalRevenue) * 100).toFixed(0) : 0}%
                         </span>
                     </div>
-                    <div className="text-lg font-extrabold text-slate-900 leading-tight">
+                    <div className={`text-lg font-extrabold leading-tight mt-1 ${categoryFilter === 'bizum' ? 'text-white' : 'text-slate-900'}`}>
                         {bizumRevenue.toFixed(2)} €
                     </div>
-                    <span className="text-[10px] text-slate-500 font-medium">{bizumSales.length} cobros</span>
-                </div>
+                    <span className={`text-[10px] font-medium mt-0.5 ${categoryFilter === 'bizum' ? 'text-slate-300' : 'text-slate-500'}`}>
+                        {bizumSales.length} cobros {categoryFilter === 'bizum' ? '(filtrado)' : ''}
+                    </span>
+                </button>
 
-                {/* Volume summary */}
-                <div className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 flex flex-col justify-center shadow-xs">
-                    <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">📚 Libros Vendidos</span>
-                    <div className="text-lg font-extrabold text-slate-900 leading-tight">
+                {/* Volume summary (Card 4: Solo Ventas) */}
+                <button
+                    type="button"
+                    onClick={() => setCategoryFilter(c => c === 'sales' ? 'all' : 'sales')}
+                    className={`rounded-xl border p-3 flex flex-col justify-between text-left transition shadow-xs cursor-pointer ${
+                        categoryFilter === 'sales'
+                            ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-500/30'
+                            : 'border-slate-200 bg-white hover:border-blue-300 hover:bg-slate-50'
+                    }`}
+                >
+                    <div className="flex items-center justify-between w-full">
+                        <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">📚 Libros Vendidos</span>
+                        {categoryFilter === 'sales' && (
+                            <span className="rounded-full bg-blue-600 px-1.5 py-0.2 text-[9px] font-extrabold text-white">✓ Ventas</span>
+                        )}
+                    </div>
+                    <div className="text-lg font-extrabold text-slate-900 leading-tight mt-1">
                         {totalUnitsSold} <span className="text-xs font-medium text-slate-500">uds.</span>
                     </div>
-                    <span className="text-[10px] text-slate-500 font-medium">en el periodo</span>
-                </div>
+                    <span className="text-[10px] text-slate-500 font-medium mt-0.5">
+                        {salesFiltered.length} ventas {categoryFilter === 'sales' ? '(filtrado)' : ''}
+                    </span>
+                </button>
 
-                {/* Stock Restante Actual */}
-                <div className="rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-2 flex flex-col justify-center shadow-xs">
-                    <span className="text-[10px] font-bold text-amber-900 uppercase tracking-wider">📦 Stock Restante</span>
-                    <div className="text-xl font-extrabold text-amber-900 leading-tight">
+                {/* Stock Restante & Reposiciones (Card 5: Solo Stock) */}
+                <button
+                    type="button"
+                    onClick={() => setCategoryFilter(c => c === 'stock' ? 'all' : 'stock')}
+                    className={`rounded-xl border p-3 flex flex-col justify-between text-left transition shadow-xs cursor-pointer ${
+                        categoryFilter === 'stock'
+                            ? 'border-amber-600 bg-amber-50 ring-2 ring-amber-500/30'
+                            : 'border-amber-300 bg-amber-50/60 hover:border-amber-400 hover:bg-amber-100/50'
+                    }`}
+                >
+                    <div className="flex items-center justify-between w-full">
+                        <span className="text-[10px] font-bold text-amber-900 uppercase tracking-wider">📦 Stock Restante</span>
+                        {categoryFilter === 'stock' && (
+                            <span className="rounded-full bg-amber-700 px-1.5 py-0.2 text-[9px] font-extrabold text-white">✓ Movimientos</span>
+                        )}
+                    </div>
+                    <div className="text-xl font-extrabold text-amber-900 leading-tight mt-1">
                         {remainingStock} <span className="text-xs font-normal text-amber-800">uds.</span>
                     </div>
-                    <span className="text-[10px] text-amber-800 font-medium truncate">
-                        {activeFilter ? activeFilter.label : 'en stand'}
+                    <span className="text-[10px] text-amber-800 font-medium truncate mt-0.5">
+                        {totalStockMovementsCount} mov. {categoryFilter === 'stock' ? '(filtrado)' : ''}
                     </span>
-                </div>
+                </button>
             </div>
 
             {/* Main Expanded Table Area */}
