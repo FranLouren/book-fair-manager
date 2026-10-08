@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
+import * as XLSX from 'xlsx'
 
 type Book = {
     id: number
@@ -330,6 +331,159 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
         setSearchInputValue('')
     }
 
+    function exportToExcel() {
+        if (!filteredItems || filteredItems.length === 0) {
+            alert('No hay datos en la vista filtrada para exportar.')
+            return
+        }
+
+        const categoryLabels: Record<string, string> = {
+            all: 'Todos los registros',
+            efectivo: 'Solo ventas en Efectivo',
+            bizum: 'Solo ventas en Bizum',
+            sales: 'Solo Ventas',
+            stock: 'Solo Movimientos de Stock'
+        }
+
+        const shiftLabels: Record<string, string> = {
+            all: 'Todos los turnos',
+            morning: '☀️ Mañana (08:00 - 15:00)',
+            afternoon: '🌙 Tarde (15:00 - 23:59)'
+        }
+
+        const filterLabelText = activeFilter ? activeFilter.label : 'Ninguno'
+        const exportDateStr = new Date().toLocaleString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        })
+
+        // Build Excel 2D Data Array
+        const excelData: any[][] = [
+            // Title Header Block
+            ['REPORTE DE HISTORIAL DE MOVIMIENTOS Y VENTAS'],
+            ['Feria:', fairName, '', 'Fecha Exportación:', exportDateStr],
+            ['Filtro Categoría:', categoryLabels[categoryFilter] || categoryFilter, '', 'Filtro Turno:', shiftLabels[selectedShift] || selectedShift],
+            ['Filtro Fecha:', selectedDate || 'Todas las fechas', '', 'Filtro Libro/Autor:', filterLabelText],
+            [], // Empty row
+
+            // KPI Summary Block
+            ['RESUMEN DE DATOS FILTRADOS'],
+            [
+                'Ventas Totales (Reg.)',
+                'Total Recaudado (€)',
+                'Recaudación Efectivo (€)',
+                'Recaudación Bizum (€)',
+                'Unidades Vendidas',
+                'Movimientos de Stock'
+            ],
+            [
+                salesFiltered.length,
+                totalRevenue.toFixed(2) + ' €',
+                cashRevenue.toFixed(2) + ' €',
+                bizumRevenue.toFixed(2) + ' €',
+                totalUnitsSold,
+                totalStockMovementsCount
+            ],
+            [], // Empty row
+
+            // Main Table Header
+            [
+                'Fecha y Hora',
+                'Tipo Operación',
+                'Título del Libro',
+                'Autor',
+                'ISBN',
+                'Cantidad',
+                'Precio Unitario (€)',
+                'Importe Total (€)',
+                'Método / Detalle',
+                'Comentario / Notas'
+            ]
+        ]
+
+        // Populate Table Data Rows
+        filteredItems.forEach(item => {
+            const dt = new Date(item.created_at)
+            const formattedDate = dt.toLocaleString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            })
+
+            const isSale = item.type === 'sale'
+            const tipoOp = isSale ? 'Venta' : 'Stock'
+            const qtyStr = isSale ? item.quantity : (item.quantity > 0 ? `+${item.quantity}` : `${item.quantity}`)
+            const unitPriceStr = isSale && item.unit_price !== undefined ? `${item.unit_price.toFixed(2)} €` : '-'
+            const totalPriceStr = isSale && item.total_price !== undefined ? `${item.total_price.toFixed(2)} €` : '-'
+
+            let metDetalle = '-'
+            if (isSale) {
+                metDetalle = item.payment_method === 'efectivo' ? '💵 Efectivo' : '📲 Bizum'
+            } else {
+                if (item.movement_type === 'initial') metDetalle = '📦 Stock Inicial'
+                else if (item.movement_type === 'restock') metDetalle = '➕ Reposición (+)'
+                else if (item.quantity < 0) metDetalle = '🔻 Retirada (-)'
+                else metDetalle = '📦 Ajuste'
+            }
+
+            excelData.push([
+                formattedDate,
+                tipoOp,
+                item.book_title,
+                item.book_author || '-',
+                item.book_isbn || '-',
+                qtyStr,
+                unitPriceStr,
+                totalPriceStr,
+                metDetalle,
+                item.notes || '-'
+            ])
+        })
+
+        // Add Footer Row with Totals
+        excelData.push([
+            'TOTALES FILTRADOS',
+            '',
+            '',
+            '',
+            '',
+            totalUnitsSold,
+            '',
+            `${totalRevenue.toFixed(2)} €`,
+            '',
+            ''
+        ])
+
+        // Create Worksheet
+        const ws = XLSX.utils.aoa_to_sheet(excelData)
+
+        // Calculate dynamic column widths
+        const colWidths = excelData[9].map((_, colIdx) => {
+            let maxLen = 12
+            excelData.forEach((row, rowIdx) => {
+                if (rowIdx >= 9 && row[colIdx] !== undefined && row[colIdx] !== null) {
+                    const strLen = String(row[colIdx]).length
+                    if (strLen > maxLen) maxLen = strLen
+                }
+            })
+            return { wch: maxLen + 3 }
+        })
+        ws['!cols'] = colWidths
+
+        // Create Workbook and download
+        const wb = XLSX.utils.book_new()
+        XLSX.utils.book_append_sheet(wb, ws, 'Historial Filtrado')
+
+        const cleanFairName = fairName.replace(/[^a-zA-Z0-9]/g, '_')
+        const todayStr = getLocalDateString(new Date())
+        XLSX.writeFile(wb, `Historial_${cleanFairName}_${todayStr}.xlsx`)
+    }
+
     function resetFilters() {
         setActiveFilter(null)
         setSelectedAuthorBookId('all')
@@ -361,13 +515,22 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
                         {fairName}
                     </span>
                 </div>
-                <button
-                    onClick={resetFilters}
-                    className="flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-800 hover:bg-slate-100 transition shadow-xs"
-                    title="Restablecer todos los filtros"
-                >
-                    <span>🔄</span> Limpiar Filtros
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={exportToExcel}
+                        className="flex items-center gap-1.5 rounded-xl border border-emerald-600 bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700 active:scale-[0.98] transition shadow-xs cursor-pointer"
+                        title="Descargar historial filtrado en Excel"
+                    >
+                        <span>📊</span> Descargar Excel
+                    </button>
+                    <button
+                        onClick={resetFilters}
+                        className="flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-800 hover:bg-slate-100 active:scale-[0.98] transition shadow-xs cursor-pointer"
+                        title="Restablecer todos los filtros"
+                    >
+                        <span>🔄</span> Limpiar Filtros
+                    </button>
+                </div>
             </div>
 
             {/* Filter Toolbar */}
