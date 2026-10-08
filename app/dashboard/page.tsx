@@ -99,15 +99,35 @@ export default function DashboardPage() {
 
             {/* Header navbar */}
             <header className="border-b border-slate-200 bg-[#fafafa] px-6 py-6 shadow-xs">
-                <div className="mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-center gap-4 text-center">
-                    <img
-                        src="/logo.jpg"
-                        alt="Masticadores León Logo"
-                        className="h-16 w-16 rounded-full object-cover border-2 border-slate-300 shadow-sm"
-                    />
-                    <div className="text-center sm:text-left">
-                        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight leading-tight">Masticadores León</h1>
-                        <p className="text-sm font-semibold text-slate-500 mt-0.5">Gestión de Ferias del Libro</p>
+                <div className="mx-auto max-w-7xl relative flex items-center justify-center min-h-[64px]">
+                    {/* Centered Logo & Title */}
+                    <div
+                        className="flex flex-col sm:flex-row items-center justify-center gap-4 text-center cursor-pointer"
+                        onClick={() => router.push('/dashboard')}
+                    >
+                        <img
+                            src="/logo.jpg"
+                            alt="Masticadores León Logo"
+                            className="h-16 w-16 rounded-full object-cover border-2 border-slate-300 shadow-sm"
+                        />
+                        <div className="text-center sm:text-left">
+                            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight leading-tight">Masticadores León</h1>
+                            <p className="text-sm font-semibold text-slate-500 mt-0.5">Gestión de Ferias del Libro</p>
+                        </div>
+                    </div>
+
+                    {/* Logout button positioned on the right */}
+                    <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                        <button
+                            onClick={async () => {
+                                await supabase.auth.signOut()
+                                router.replace('/login')
+                            }}
+                            className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition shadow-xs"
+                            title="Cerrar sesión"
+                        >
+                            <span>🚪</span> <span className="hidden sm:inline">Cerrar sesión</span>
+                        </button>
                     </div>
                 </div>
             </header>

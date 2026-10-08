@@ -514,64 +514,89 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
                                 type="date"
                                 value={selectedDate}
                                 onChange={e => setSelectedDate(e.target.value)}
-                                className="flex-1 h-9 rounded-xl bg-[#fafafa] px-3 text-sm font-medium text-slate-900 outline-none border border-slate-300 focus:border-slate-800"
+                                className={`flex-1 h-9 rounded-xl px-3 text-sm font-medium outline-none border transition ${
+                                    selectedDate
+                                        ? 'border-blue-500 bg-blue-50/50 text-slate-900 ring-2 ring-blue-500/20 font-semibold'
+                                        : 'bg-[#fafafa] text-slate-900 border-slate-300 focus:border-slate-800'
+                                }`}
                             />
-                            <button
-                                type="button"
-                                onClick={() => setSelectedDate(getLocalDateString(new Date()))}
-                                className="h-9 rounded-xl border border-slate-300 bg-slate-100 px-3 text-xs font-bold text-slate-800 hover:bg-slate-200 transition"
-                            >
-                                Hoy
-                            </button>
+                            {(() => {
+                                const todayDateStr = getLocalDateString(new Date())
+                                const isTodaySelected = selectedDate === todayDateStr
+                                return (
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedDate(isTodaySelected ? '' : todayDateStr)}
+                                        className={`h-9 rounded-xl border px-3 text-xs font-bold transition cursor-pointer ${
+                                            isTodaySelected
+                                                ? 'border-blue-500 bg-blue-50/80 text-blue-900 ring-2 ring-blue-500/20 shadow-sm'
+                                                : 'border-slate-300 bg-slate-100 text-slate-800 hover:bg-slate-200'
+                                        }`}
+                                    >
+                                        Hoy
+                                    </button>
+                                )
+                            })()}
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Interactive KPI Filter Cards */}
+            {/* Interactive KPI Filter Cards (Soft Blue Fill when Active, Black Numbers) */}
             <div className="mb-3 grid grid-cols-2 sm:grid-cols-5 gap-2.5">
                 {/* Total Recaudado (Card 1: Ver Todo) */}
                 <button
                     type="button"
                     onClick={() => setCategoryFilter('all')}
-                    className={`rounded-xl border p-3 flex flex-col justify-between text-left transition shadow-xs cursor-pointer ${
+                    className={`rounded-xl border p-3 flex flex-col justify-between text-left transition shadow-2xs cursor-pointer ${
                         categoryFilter === 'all'
-                            ? 'border-emerald-600 bg-emerald-50 ring-2 ring-emerald-500/20'
-                            : 'border-slate-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/40'
+                            ? 'border-blue-500 bg-blue-50/80 ring-2 ring-blue-500/20 shadow-sm'
+                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
                     }`}
                 >
                     <div className="flex items-center justify-between w-full">
-                        <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Total Recaudado</span>
+                        <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">Total Recaudado</span>
                         {categoryFilter === 'all' && (
-                            <span className="rounded-full bg-emerald-700 px-1.5 py-0.2 text-[9px] font-extrabold text-white">✓ Todos</span>
+                            <span className="rounded-full bg-blue-600 px-1.5 py-0.2 text-[9px] font-extrabold text-white">✓ Todos</span>
                         )}
                     </div>
-                    <div className="text-xl font-extrabold text-emerald-800 leading-tight mt-1">
+                    <div className="text-xl font-extrabold text-slate-900 leading-tight mt-1">
                         {totalRevenue.toFixed(2)} €
                     </div>
-                    <span className="text-[10px] text-emerald-700 font-medium mt-0.5">{salesFiltered.length} ventas</span>
+                    <span className={`text-[10px] font-medium mt-0.5 ${categoryFilter === 'all' ? 'text-slate-800 font-bold' : 'text-slate-500'}`}>
+                        {salesFiltered.length} ventas
+                    </span>
                 </button>
 
                 {/* Cash Balance (Card 2: Solo Efectivo) */}
                 <button
                     type="button"
                     onClick={() => setCategoryFilter(c => c === 'efectivo' ? 'all' : 'efectivo')}
-                    className={`rounded-xl border p-3 flex flex-col justify-between text-left transition shadow-xs cursor-pointer ${
+                    className={`rounded-xl border p-3 flex flex-col justify-between text-left transition shadow-2xs cursor-pointer ${
                         categoryFilter === 'efectivo'
-                            ? 'border-emerald-600 bg-emerald-50 ring-2 ring-emerald-500/30'
-                            : 'border-slate-200 bg-white hover:border-emerald-300 hover:bg-slate-50'
+                            ? 'border-blue-500 bg-blue-50/80 ring-2 ring-blue-500/20 shadow-sm'
+                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
                     }`}
                 >
                     <div className="flex items-center justify-between w-full">
                         <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">💵 Efectivo</span>
-                        <span className={`rounded px-1.5 text-[10px] font-extrabold ${categoryFilter === 'efectivo' ? 'bg-emerald-700 text-white' : 'bg-emerald-100 text-emerald-800'}`}>
-                            {totalRevenue > 0 ? ((cashRevenue / totalRevenue) * 100).toFixed(0) : 0}%
-                        </span>
+                        <div className="flex items-center gap-1">
+                            {categoryFilter === 'efectivo' && (
+                                <span className="rounded-full bg-blue-600 px-1.5 py-0.2 text-[9px] font-extrabold text-white">✓ Efectivo</span>
+                            )}
+                            <span className={`rounded px-1.5 text-[10px] font-extrabold border ${
+                                categoryFilter === 'efectivo'
+                                    ? 'bg-blue-100 border-blue-200 text-blue-900'
+                                    : 'bg-slate-100 border-slate-200 text-slate-700'
+                            }`}>
+                                {totalRevenue > 0 ? ((cashRevenue / totalRevenue) * 100).toFixed(0) : 0}%
+                            </span>
+                        </div>
                     </div>
-                    <div className="text-lg font-extrabold text-slate-900 leading-tight mt-1">
+                    <div className="text-xl font-extrabold text-slate-900 leading-tight mt-1">
                         {cashRevenue.toFixed(2)} €
                     </div>
-                    <span className="text-[10px] text-slate-500 font-medium mt-0.5">
+                    <span className={`text-[10px] font-medium mt-0.5 ${categoryFilter === 'efectivo' ? 'text-slate-800 font-bold' : 'text-slate-500'}`}>
                         {cashSales.length} cobros {categoryFilter === 'efectivo' ? '(filtrado)' : ''}
                     </span>
                 </button>
@@ -580,34 +605,43 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
                 <button
                     type="button"
                     onClick={() => setCategoryFilter(c => c === 'bizum' ? 'all' : 'bizum')}
-                    className={`rounded-xl border p-3 flex flex-col justify-between text-left transition shadow-xs cursor-pointer ${
+                    className={`rounded-xl border p-3 flex flex-col justify-between text-left transition shadow-2xs cursor-pointer ${
                         categoryFilter === 'bizum'
-                            ? 'border-slate-900 bg-slate-900 text-white ring-2 ring-slate-800/30'
-                            : 'border-slate-200 bg-white hover:border-slate-400 hover:bg-slate-50'
+                            ? 'border-blue-500 bg-blue-50/80 ring-2 ring-blue-500/20 shadow-sm'
+                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
                     }`}
                 >
                     <div className="flex items-center justify-between w-full">
-                        <span className={`text-[10px] font-bold uppercase tracking-wider ${categoryFilter === 'bizum' ? 'text-slate-200' : 'text-slate-700'}`}>📲 Bizum</span>
-                        <span className={`rounded px-1.5 text-[10px] font-extrabold ${categoryFilter === 'bizum' ? 'bg-white text-slate-900' : 'bg-slate-200 text-slate-900'}`}>
-                            {totalRevenue > 0 ? ((bizumRevenue / totalRevenue) * 100).toFixed(0) : 0}%
-                        </span>
+                        <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">📲 Bizum</span>
+                        <div className="flex items-center gap-1">
+                            {categoryFilter === 'bizum' && (
+                                <span className="rounded-full bg-blue-600 px-1.5 py-0.2 text-[9px] font-extrabold text-white">✓ Bizum</span>
+                            )}
+                            <span className={`rounded px-1.5 text-[10px] font-extrabold border ${
+                                categoryFilter === 'bizum'
+                                    ? 'bg-blue-100 border-blue-200 text-blue-900'
+                                    : 'bg-slate-100 border-slate-200 text-slate-700'
+                            }`}>
+                                {totalRevenue > 0 ? ((bizumRevenue / totalRevenue) * 100).toFixed(0) : 0}%
+                            </span>
+                        </div>
                     </div>
-                    <div className={`text-lg font-extrabold leading-tight mt-1 ${categoryFilter === 'bizum' ? 'text-white' : 'text-slate-900'}`}>
+                    <div className="text-xl font-extrabold text-slate-900 leading-tight mt-1">
                         {bizumRevenue.toFixed(2)} €
                     </div>
-                    <span className={`text-[10px] font-medium mt-0.5 ${categoryFilter === 'bizum' ? 'text-slate-300' : 'text-slate-500'}`}>
+                    <span className={`text-[10px] font-medium mt-0.5 ${categoryFilter === 'bizum' ? 'text-slate-800 font-bold' : 'text-slate-500'}`}>
                         {bizumSales.length} cobros {categoryFilter === 'bizum' ? '(filtrado)' : ''}
                     </span>
                 </button>
 
-                {/* Volume summary (Card 4: Solo Ventas) */}
+                {/* Volume Summary (Card 4: Solo Ventas) */}
                 <button
                     type="button"
                     onClick={() => setCategoryFilter(c => c === 'sales' ? 'all' : 'sales')}
-                    className={`rounded-xl border p-3 flex flex-col justify-between text-left transition shadow-xs cursor-pointer ${
+                    className={`rounded-xl border p-3 flex flex-col justify-between text-left transition shadow-2xs cursor-pointer ${
                         categoryFilter === 'sales'
-                            ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-500/30'
-                            : 'border-slate-200 bg-white hover:border-blue-300 hover:bg-slate-50'
+                            ? 'border-blue-500 bg-blue-50/80 ring-2 ring-blue-500/20 shadow-sm'
+                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
                     }`}
                 >
                     <div className="flex items-center justify-between w-full">
@@ -616,34 +650,34 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
                             <span className="rounded-full bg-blue-600 px-1.5 py-0.2 text-[9px] font-extrabold text-white">✓ Ventas</span>
                         )}
                     </div>
-                    <div className="text-lg font-extrabold text-slate-900 leading-tight mt-1">
-                        {totalUnitsSold} <span className="text-xs font-medium text-slate-500">uds.</span>
+                    <div className="text-xl font-extrabold text-slate-900 leading-tight mt-1">
+                        {totalUnitsSold} <span className="text-xs font-semibold text-slate-600">uds.</span>
                     </div>
-                    <span className="text-[10px] text-slate-500 font-medium mt-0.5">
+                    <span className={`text-[10px] font-medium mt-0.5 ${categoryFilter === 'sales' ? 'text-slate-800 font-bold' : 'text-slate-500'}`}>
                         {salesFiltered.length} ventas {categoryFilter === 'sales' ? '(filtrado)' : ''}
                     </span>
                 </button>
 
-                {/* Stock Restante & Reposiciones (Card 5: Solo Stock) */}
+                {/* Stock Restante (Card 5: Solo Stock) */}
                 <button
                     type="button"
                     onClick={() => setCategoryFilter(c => c === 'stock' ? 'all' : 'stock')}
-                    className={`rounded-xl border p-3 flex flex-col justify-between text-left transition shadow-xs cursor-pointer ${
+                    className={`rounded-xl border p-3 flex flex-col justify-between text-left transition shadow-2xs cursor-pointer ${
                         categoryFilter === 'stock'
-                            ? 'border-amber-600 bg-amber-50 ring-2 ring-amber-500/30'
-                            : 'border-amber-300 bg-amber-50/60 hover:border-amber-400 hover:bg-amber-100/50'
+                            ? 'border-blue-500 bg-blue-50/80 ring-2 ring-blue-500/20 shadow-sm'
+                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
                     }`}
                 >
                     <div className="flex items-center justify-between w-full">
-                        <span className="text-[10px] font-bold text-amber-900 uppercase tracking-wider">📦 Stock Restante</span>
+                        <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">📦 Stock Restante</span>
                         {categoryFilter === 'stock' && (
-                            <span className="rounded-full bg-amber-700 px-1.5 py-0.2 text-[9px] font-extrabold text-white">✓ Movimientos</span>
+                            <span className="rounded-full bg-blue-600 px-1.5 py-0.2 text-[9px] font-extrabold text-white">✓ Stock</span>
                         )}
                     </div>
-                    <div className="text-xl font-extrabold text-amber-900 leading-tight mt-1">
-                        {remainingStock} <span className="text-xs font-normal text-amber-800">uds.</span>
+                    <div className="text-xl font-extrabold text-slate-900 leading-tight mt-1">
+                        {remainingStock} <span className="text-xs font-semibold text-slate-600">uds.</span>
                     </div>
-                    <span className="text-[10px] text-amber-800 font-medium truncate mt-0.5">
+                    <span className={`text-[10px] font-medium mt-0.5 ${categoryFilter === 'stock' ? 'text-slate-800 font-bold' : 'text-slate-500'}`}>
                         {totalStockMovementsCount} mov. {categoryFilter === 'stock' ? '(filtrado)' : ''}
                     </span>
                 </button>

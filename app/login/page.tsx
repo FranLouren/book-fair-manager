@@ -15,7 +15,14 @@ export default function LoginPage() {
 
     useEffect(() => {
         document.title = "Feria Masticadores"
-    }, [])
+        async function checkAlreadyLoggedIn() {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (session) {
+                router.replace('/dashboard')
+            }
+        }
+        checkAlreadyLoggedIn()
+    }, [router])
 
     // Handle user authentication via Supabase
     async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
