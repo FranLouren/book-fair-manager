@@ -30,6 +30,7 @@ export default function NewFairModal({ onClose, onCreated }: Props) {
                 start_date: startDate || null,
                 end_date: endDate || null,
                 discount_percentage: parseFloat(discountPercentage) || 0,
+                status: 'active',
             })
 
         if (error) {

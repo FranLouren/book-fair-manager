@@ -33,6 +33,8 @@ export default function BooksPage() {
     const [fairStartDate, setFairStartDate] = useState<string | null>(null)
     const [fairEndDate, setFairEndDate] = useState<string | null>(null)
     const [discountPercentage, setDiscountPercentage] = useState(10)
+    const [fairStatus, setFairStatus] = useState<'active' | 'finalized'>('active')
+    const [togglingStatus, setTogglingStatus] = useState(false)
     const [books, setBooks] = useState<Book[]>([])
     const [loading, setLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)
@@ -66,7 +68,7 @@ export default function BooksPage() {
         if (!fairId) return
         const { data, error } = await supabase
             .from('fairs')
-            .select('name, location, start_date, end_date, discount_percentage')
+            .select('name, location, start_date, end_date, discount_percentage, status')
             .eq('id', fairId)
             .single()
 
@@ -81,7 +83,27 @@ export default function BooksPage() {
             setFairStartDate(data.start_date)
             setFairEndDate(data.end_date)
             setDiscountPercentage(data.discount_percentage ?? 10)
+            setFairStatus(data.status === 'finalized' ? 'finalized' : 'active')
         }
+    }
+
+    // Toggle fair status in detail page
+    async function toggleFairStatusInDetail() {
+        const newStatus = fairStatus === 'finalized' ? 'active' : 'finalized'
+        setTogglingStatus(true)
+
+        const { error } = await supabase
+            .from('fairs')
+            .update({ status: newStatus })
+            .eq('id', fairId)
+
+        if (error) {
+            console.error('Error updating status:', error)
+            alert('Error al actualizar el estado de la feria. Asegúrate de haber ejecutado en Supabase SQL:\nALTER TABLE fairs ADD COLUMN status TEXT DEFAULT \'active\';')
+        } else {
+            setFairStatus(newStatus)
+        }
+        setTogglingStatus(false)
     }
 
     // Load books for the active fair and calculate sold units dynamically from sale_items
@@ -296,7 +318,7 @@ export default function BooksPage() {
             <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
                 
                 {/* Page Breadcrumb & Title Header Banner */}
-                <div className="mb-8 rounded-2xl border border-slate-200 bg-[#fafafa] p-6 shadow-xs">
+                <div className="mb-6 rounded-2xl border border-slate-200 bg-[#fafafa] p-6 shadow-xs">
                     {/* Breadcrumbs */}
                     <nav className="flex items-center gap-2 text-xs font-bold text-slate-500 mb-3">
                         <button
@@ -309,12 +331,21 @@ export default function BooksPage() {
                         <span className="text-slate-900">{fairName || `Feria #${fairId}`}</span>
                     </nav>
 
-                    {/* Title & Badges */}
+                    {/* Title & Badges & Action Button */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
-                            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                                {fairName || `Feria #${fairId}`}
-                            </h2>
+                            <div className="flex items-center gap-3">
+                                <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                                    {fairName || `Feria #${fairId}`}
+                                </h2>
+                                <span className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-0.5 text-xs font-extrabold border ${
+                                    fairStatus === 'finalized'
+                                        ? 'bg-amber-100 text-amber-900 border-amber-300'
+                                        : 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                                }`}>
+                                    {fairStatus === 'finalized' ? '🏁 Finalizada' : '🟢 Activa'}
+                                </span>
+                            </div>
                             <p className="mt-1 text-sm font-medium text-slate-600">
                                 Catálogo de inventario de libros y registro de ventas.
                             </p>
@@ -336,8 +367,41 @@ export default function BooksPage() {
                                 </span>
                             </div>
                         </div>
+
+                        {/* Finalize Button (only when fair is active) */}
+                        {fairStatus !== 'finalized' && (
+                            <button
+                                onClick={toggleFairStatusInDetail}
+                                disabled={togglingStatus}
+                                className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold shadow-xs transition shrink-0 cursor-pointer disabled:opacity-50 bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-600 hover:text-white"
+                            >
+                                {togglingStatus ? 'Guardando...' : '🏁 Finalizar Feria'}
+                            </button>
+                        )}
                     </div>
                 </div>
+
+                {/* Finalized Fair Notice Banner */}
+                {fairStatus === 'finalized' && (
+                    <div className="mb-6 rounded-2xl border border-amber-300 bg-amber-50/90 p-4 text-slate-900 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <span className="text-2xl">🏁</span>
+                            <div>
+                                <h4 className="text-sm font-extrabold text-amber-900">Esta feria está finalizada (Modo Histórico y Consulta)</h4>
+                                <p className="text-xs text-amber-800 font-medium mt-0.5">
+                                    Puedes consultar todos los libros, explorar el historial de ventas y descargar informes en Excel.
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={toggleFairStatusInDetail}
+                            disabled={togglingStatus}
+                            className="rounded-xl bg-amber-900 text-white px-3.5 py-2 text-xs font-bold hover:bg-amber-950 transition whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50"
+                        >
+                            {togglingStatus ? 'Reabriendo...' : '🔄 Reabrir Feria'}
+                        </button>
+                    </div>
+                )}
 
                 {/* Loading state */}
                 {loading && (
@@ -399,16 +463,18 @@ export default function BooksPage() {
                             <div className="flex items-center gap-3">
                                 <button
                                     onClick={() => setShowHistory(true)}
-                                    className="rounded-xl border border-slate-300 bg-slate-100 px-4 py-2.5 text-sm font-bold text-slate-800 transition hover:bg-slate-200/80 whitespace-nowrap shadow-xs"
+                                    className="rounded-xl border border-slate-300 bg-slate-100 px-4 py-2.5 text-sm font-bold text-slate-800 transition hover:bg-slate-200/80 whitespace-nowrap shadow-xs cursor-pointer"
                                 >
                                     📜 Historial
                                 </button>
-                                <button
-                                    onClick={() => setShowModal(true)}
-                                    className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800 whitespace-nowrap shadow-xs"
-                                >
-                                    + Añadir Libro
-                                </button>
+                                {fairStatus !== 'finalized' && (
+                                    <button
+                                        onClick={() => setShowModal(true)}
+                                        className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800 whitespace-nowrap shadow-xs cursor-pointer"
+                                    >
+                                        + Añadir Libro
+                                    </button>
+                                )}
                             </div>
                         </div>
 
@@ -448,71 +514,81 @@ export default function BooksPage() {
                                                     <div className="flex items-center justify-center gap-2">
                                                         <div className="w-16 shrink-0 flex justify-center">
                                                             <span
-                                                                className={`inline-flex items-center justify-center w-full rounded-md px-2 py-1 text-sm font-mono transition ${
-                                                                    book.stock === 0
-                                                                        ? 'bg-rose-100 text-rose-700 font-extrabold border border-rose-300'
-                                                                        : 'bg-slate-200/80 text-slate-900 font-extrabold'
-                                                                }`}
-                                                            >
-                                                                {book.stock}
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex items-center gap-1.5 shrink-0">
-                                                            <button
-                                                                onClick={() => {
-                                                                    setRestockError(null)
-                                                                    setAddedStock('5')
-                                                                    setStockMode('add')
-                                                                    setRestockBook(book)
-                                                                }}
-                                                                className="h-8 w-8 flex items-center justify-center rounded-lg bg-slate-900 text-sm font-bold text-white transition hover:bg-slate-800 shrink-0 shadow-2xs"
-                                                                title="Añadir stock rápido"
-                                                            >
-                                                                +
-                                                            </button>
-                                                            <button
-                                                                onClick={() => {
-                                                                    setRestockError(null)
-                                                                    setAddedStock('1')
-                                                                    setStockMode('remove')
-                                                                    setRestockBook(book)
-                                                                }}
-                                                                className="h-8 w-8 flex items-center justify-center rounded-lg bg-rose-100 text-rose-700 border border-rose-300 text-sm font-bold transition hover:bg-rose-600 hover:text-white shrink-0 shadow-2xs"
-                                                                title="Retirar stock"
-                                                            >
-                                                                -
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 font-extrabold text-slate-900 text-center">
-                                                    {book.sold || 0}
-                                                </td>
-                                                <td className="px-6 py-4 text-right">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <button
-                                                            onClick={() => setSellingBook(book)}
-                                                            className="inline-flex items-center gap-1 rounded-lg bg-emerald-100/80 px-2.5 py-1 text-xs font-bold text-emerald-800 border border-emerald-300 transition hover:bg-emerald-600 hover:text-white"
-                                                            title="Vender libro"
-                                                        >
-                                                            🛒 Vender
-                                                        </button>
-                                                        <button
-                                                            onClick={() => setEditingBook(book)}
-                                                            className="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-200 hover:text-slate-900"
-                                                            title="Editar libro"
-                                                        >
-                                                            ✏️
-                                                        </button>
-                                                        <button
-                                                            onClick={() => setDeletingBook(book)}
-                                                            className="rounded-lg p-1.5 text-slate-500 transition hover:bg-red-100 hover:text-red-600"
-                                                            title="Eliminar libro"
-                                                        >
-                                                            🗑️
-                                                        </button>
-                                                    </div>
-                                                </td>
+                                                                 className={`inline-flex items-center justify-center w-full rounded-md px-2 py-1 text-sm font-mono transition ${
+                                                                     book.stock === 0
+                                                                         ? 'bg-rose-100 text-rose-700 font-extrabold border border-rose-300'
+                                                                         : 'bg-slate-200/80 text-slate-900 font-extrabold'
+                                                                 }`}
+                                                             >
+                                                                 {book.stock}
+                                                             </span>
+                                                         </div>
+                                                         {fairStatus !== 'finalized' && (
+                                                             <div className="flex items-center gap-1.5 shrink-0">
+                                                                 <button
+                                                                     onClick={() => {
+                                                                         setRestockError(null)
+                                                                         setAddedStock('5')
+                                                                         setStockMode('add')
+                                                                         setRestockBook(book)
+                                                                     }}
+                                                                     className="h-8 w-8 flex items-center justify-center rounded-lg bg-slate-900 text-sm font-bold text-white transition hover:bg-slate-800 shrink-0 shadow-2xs cursor-pointer"
+                                                                     title="Añadir stock rápido"
+                                                                 >
+                                                                     +
+                                                                 </button>
+                                                                 <button
+                                                                     onClick={() => {
+                                                                         setRestockError(null)
+                                                                         setAddedStock('1')
+                                                                         setStockMode('remove')
+                                                                         setRestockBook(book)
+                                                                     }}
+                                                                     className="h-8 w-8 flex items-center justify-center rounded-lg bg-rose-100 text-rose-700 border border-rose-300 text-sm font-bold transition hover:bg-rose-600 hover:text-white shrink-0 shadow-2xs cursor-pointer"
+                                                                     title="Retirar stock"
+                                                                 >
+                                                                     -
+                                                                 </button>
+                                                             </div>
+                                                         )}
+                                                     </div>
+                                                 </td>
+                                                 <td className="px-6 py-4 font-extrabold text-slate-900 text-center">
+                                                     {book.sold || 0}
+                                                 </td>
+                                                 <td className="px-6 py-4 text-right">
+                                                     <div className="flex items-center justify-end gap-2">
+                                                         {fairStatus === 'finalized' ? (
+                                                             <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 text-slate-500 border border-slate-200 px-2.5 py-1 text-xs font-semibold">
+                                                                 🔒 Consulta
+                                                             </span>
+                                                         ) : (
+                                                             <>
+                                                                 <button
+                                                                     onClick={() => setSellingBook(book)}
+                                                                     className="inline-flex items-center gap-1 rounded-lg bg-emerald-100/80 px-2.5 py-1 text-xs font-bold text-emerald-800 border border-emerald-300 transition hover:bg-emerald-600 hover:text-white cursor-pointer"
+                                                                     title="Vender libro"
+                                                                 >
+                                                                     🛒 Vender
+                                                                 </button>
+                                                                 <button
+                                                                     onClick={() => setEditingBook(book)}
+                                                                     className="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-200 hover:text-slate-900 cursor-pointer"
+                                                                     title="Editar libro"
+                                                                 >
+                                                                     ✏️
+                                                                 </button>
+                                                                 <button
+                                                                     onClick={() => setDeletingBook(book)}
+                                                                     className="rounded-lg p-1.5 text-slate-500 transition hover:bg-red-100 hover:text-red-600 cursor-pointer"
+                                                                     title="Eliminar libro"
+                                                                 >
+                                                                     🗑️
+                                                                 </button>
+                                                             </>
+                                                         )}
+                                                     </div>
+                                                 </td>
                                             </tr>
                                         ))
                                     )}
