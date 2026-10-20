@@ -24,6 +24,7 @@ export default function NewBookModal({ fairId, onClose, onCreated }: Props) {
     const [stock, setStock] = useState('1')
     const [saving, setSaving] = useState(false)
     const [errorMsg, setErrorMsg] = useState<string | null>(null)
+    const [missingFields, setMissingFields] = useState<string[]>([])
 
     // Authors state
     const [existingAuthors, setExistingAuthors] = useState<AuthorObj[]>([])
@@ -134,6 +135,8 @@ export default function NewBookModal({ fairId, onClose, onCreated }: Props) {
         if (!price || parseFloat(price) <= 0) missing.push('Precio')
         if (!stock || parseInt(stock) < 1) missing.push('Stock')
 
+        setMissingFields(missing)
+
         if (missing.length > 0) {
             setErrorMsg(`Por favor, completa los campos obligatorios: ${missing.join(', ')}.`)
             return
@@ -199,21 +202,39 @@ export default function NewBookModal({ fairId, onClose, onCreated }: Props) {
                 <div className="flex flex-col gap-4">
                     {/* Title */}
                     <div>
-                        <label className="mb-1.5 block text-sm font-bold text-slate-800">Título del libro *</label>
+                        <div className="flex items-center justify-between mb-1.5">
+                            <label className="block text-sm font-bold text-slate-800">
+                                Título del libro <span className="text-red-500 font-bold">*</span>
+                            </label>
+                            {missingFields.includes('Título') && (
+                                <span className="text-xs font-semibold text-red-600">Campo obligatorio</span>
+                            )}
+                        </div>
                         <input
                             type="text"
                             placeholder="Ej. El Quijote de la Mancha"
                             value={title}
-                            onChange={e => setTitle(e.target.value)}
+                            onChange={e => {
+                                setTitle(e.target.value)
+                                if (missingFields.includes('Título')) {
+                                    setMissingFields(prev => prev.filter(f => f !== 'Título'))
+                                }
+                            }}
                             required
-                            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 font-medium placeholder:text-slate-400 outline-none transition focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10"
+                            className={`w-full rounded-xl border px-4 py-3 text-slate-900 font-medium placeholder:text-slate-400 outline-none transition ${
+                                missingFields.includes('Título')
+                                    ? 'border-red-400 bg-red-50/20 focus:border-red-500 focus:ring-2 focus:ring-red-200'
+                                    : 'border-slate-300 bg-white focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10'
+                            }`}
                         />
                     </div>
 
                     {/* Author Searchable Selector */}
                     <div ref={authorComboboxRef} className="relative">
                         <div className="flex items-center justify-between mb-1.5">
-                            <label className="block text-sm font-bold text-slate-800">Autor / Autora *</label>
+                            <label className="block text-sm font-bold text-slate-800">
+                                Autor / Autora <span className="text-red-500 font-bold">*</span>
+                            </label>
                             <button
                                 type="button"
                                 onClick={() => {
@@ -237,11 +258,16 @@ export default function NewBookModal({ fairId, onClose, onCreated }: Props) {
                                     setAuthorSearchQuery(e.target.value)
                                     setSelectedAuthor(null) // Reset selection when typing search query
                                     setIsDropdownOpen(true)
+                                    if (missingFields.includes('Autor')) {
+                                        setMissingFields(prev => prev.filter(f => f !== 'Autor'))
+                                    }
                                 }}
                                 className={`w-full rounded-xl border px-4 py-3 text-slate-900 font-medium placeholder:text-slate-400 outline-none transition ${
-                                    selectedAuthor
-                                        ? 'border-emerald-500 bg-emerald-50/30 font-bold'
-                                        : 'border-slate-300 bg-white focus:border-slate-800'
+                                    missingFields.includes('Autor')
+                                        ? 'border-red-400 bg-red-50/20 focus:border-red-500 focus:ring-2 focus:ring-red-200'
+                                        : selectedAuthor
+                                            ? 'border-emerald-500 bg-emerald-50/30 font-bold'
+                                            : 'border-slate-300 bg-white focus:border-slate-800'
                                 }`}
                             />
                             {selectedAuthor ? (
@@ -252,13 +278,18 @@ export default function NewBookModal({ fairId, onClose, onCreated }: Props) {
                                         setAuthorSearchQuery('')
                                         setIsDropdownOpen(true)
                                     }}
-                                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 hover:text-slate-800"
+                                    className="absolute right-3.5 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-800 transition"
+                                    title="Quitar autor"
                                 >
-                                    ✕
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
                                 </button>
                             ) : (
-                                <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">
-                                    ▼
+                                <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                                    </svg>
                                 </span>
                             )}
                         </div>
@@ -286,7 +317,12 @@ export default function NewBookModal({ fairId, onClose, onCreated }: Props) {
                                                         : 'text-slate-800 hover:bg-slate-100'
                                                 }`}
                                             >
-                                                <span>👤 {a.name}</span>
+                                                <span className="flex items-center gap-2">
+                                                    <svg className="w-3.5 h-3.5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                                                    </svg>
+                                                    <span>{a.name}</span>
+                                                </span>
                                                 {selectedAuthor?.id === a.id && (
                                                     <span className="text-[10px] opacity-80">Seleccionado</span>
                                                 )}
@@ -306,54 +342,105 @@ export default function NewBookModal({ fairId, onClose, onCreated }: Props) {
                                                 setShowNewAuthorModal(true)
                                                 setIsDropdownOpen(false)
                                             }}
-                                            className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-800 border border-slate-300 hover:bg-slate-200 transition"
+                                            className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-800 border border-slate-300 hover:bg-slate-200 transition cursor-pointer"
                                         >
-                                            ➕ Crear &quot;{authorSearchQuery}&quot; como nuevo autor
+                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                            </svg>
+                                            <span>Crear &quot;{authorSearchQuery}&quot; como nuevo autor</span>
                                         </button>
                                     </div>
                                 )}
                             </div>
                         )}
+                        {missingFields.includes('Autor') && !isDropdownOpen && (
+                            <p className="mt-1.5 text-xs font-semibold text-red-600">
+                                Debes seleccionar o registrar un autor para el libro.
+                            </p>
+                        )}
                     </div>
 
                     {/* ISBN */}
                     <div>
-                        <label className="mb-1.5 block text-sm font-bold text-slate-800">ISBN *</label>
+                        <div className="flex items-center justify-between mb-1.5">
+                            <label className="block text-sm font-bold text-slate-800">
+                                ISBN <span className="text-red-500 font-bold">*</span>
+                            </label>
+                            {missingFields.includes('ISBN') && (
+                                <span className="text-xs font-semibold text-red-600">Campo obligatorio</span>
+                            )}
+                        </div>
                         <input
                             type="text"
                             placeholder="Ej. 978-84-376-0494-7"
                             value={isbn}
-                            onChange={e => setIsbn(e.target.value)}
+                            onChange={e => {
+                                setIsbn(e.target.value)
+                                if (missingFields.includes('ISBN')) {
+                                    setMissingFields(prev => prev.filter(f => f !== 'ISBN'))
+                                }
+                            }}
                             required
-                            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 font-medium placeholder:text-slate-400 outline-none transition focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10"
+                            className={`w-full rounded-xl border px-4 py-3 text-slate-900 font-medium placeholder:text-slate-400 outline-none transition ${
+                                missingFields.includes('ISBN')
+                                    ? 'border-red-400 bg-red-50/20 focus:border-red-500 focus:ring-2 focus:ring-red-200'
+                                    : 'border-slate-300 bg-white focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10'
+                            }`}
                         />
+                        {missingFields.includes('ISBN') && (
+                            <p className="mt-1 text-xs font-semibold text-red-600">
+                                El ISBN es obligatorio para registrar el libro.
+                            </p>
+                        )}
                     </div>
 
                     <div className="flex gap-4">
                         {/* Price */}
                         <div className="flex-1">
-                            <label className="mb-1.5 block text-sm font-bold text-slate-800">Precio (€) *</label>
+                            <label className="mb-1.5 block text-sm font-bold text-slate-800">
+                                Precio (€) <span className="text-red-500 font-bold">*</span>
+                            </label>
                             <input
                                 type="number"
                                 step="0.01"
                                 placeholder="0.00"
                                 value={price}
-                                onChange={e => setPrice(e.target.value)}
+                                onChange={e => {
+                                    setPrice(e.target.value)
+                                    if (missingFields.includes('Precio')) {
+                                        setMissingFields(prev => prev.filter(f => f !== 'Precio'))
+                                    }
+                                }}
                                 required
-                                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 font-medium placeholder:text-slate-400 outline-none transition focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10"
+                                className={`w-full rounded-xl border px-4 py-3 text-slate-900 font-medium placeholder:text-slate-400 outline-none transition ${
+                                    missingFields.includes('Precio')
+                                        ? 'border-red-400 bg-red-50/20 focus:border-red-500 focus:ring-2 focus:ring-red-200'
+                                        : 'border-slate-300 bg-white focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10'
+                                }`}
                             />
                         </div>
 
                         {/* Stock */}
                         <div className="flex-1">
-                            <label className="mb-1.5 block text-sm font-bold text-slate-800">Stock Inicial *</label>
+                            <label className="mb-1.5 block text-sm font-bold text-slate-800">
+                                Stock Inicial <span className="text-red-500 font-bold">*</span>
+                            </label>
                             <input
                                 type="number"
                                 min="1"
                                 value={stock}
-                                onChange={e => setStock(e.target.value)}
+                                onChange={e => {
+                                    setStock(e.target.value)
+                                    if (missingFields.includes('Stock')) {
+                                        setMissingFields(prev => prev.filter(f => f !== 'Stock'))
+                                    }
+                                }}
                                 required
-                                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 font-medium placeholder:text-slate-400 outline-none transition focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10"
+                                className={`w-full rounded-xl border px-4 py-3 text-slate-900 font-medium placeholder:text-slate-400 outline-none transition ${
+                                    missingFields.includes('Stock')
+                                        ? 'border-red-400 bg-red-50/20 focus:border-red-500 focus:ring-2 focus:ring-red-200'
+                                        : 'border-slate-300 bg-white focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10'
+                                }`}
                             />
                         </div>
                     </div>

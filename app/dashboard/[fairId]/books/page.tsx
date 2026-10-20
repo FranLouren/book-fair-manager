@@ -366,12 +366,24 @@ export default function BooksPage() {
                                 <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
                                     {fairName || `Feria #${fairId}`}
                                 </h2>
-                                <span className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-0.5 text-xs font-extrabold border ${
+                                <span className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-0.5 text-xs font-extrabold border ${
                                     fairStatus === 'finalized'
                                         ? 'bg-amber-100 text-amber-900 border-amber-300'
                                         : 'bg-emerald-100 text-emerald-900 border-emerald-300'
                                 }`}>
-                                    {fairStatus === 'finalized' ? '🏁 Finalizada' : '🟢 Activa'}
+                                    {fairStatus === 'finalized' ? (
+                                        <>
+                                            <svg className="w-3.5 h-3.5 text-amber-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                                            </svg>
+                                            <span>Finalizada</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="h-2 w-2 rounded-full bg-emerald-600"></span>
+                                            <span>Activa</span>
+                                        </>
+                                    )}
                                 </span>
                             </div>
                             <p className="mt-1 text-sm font-medium text-slate-600">
@@ -382,16 +394,27 @@ export default function BooksPage() {
                             <div className="mt-3.5 flex flex-wrap items-center gap-2">
                                 {fairLocation && (
                                     <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-200/70 px-2.5 py-1 text-xs font-semibold text-slate-800 border border-slate-300/60">
-                                        <span>📍</span> {fairLocation}
+                                        <svg className="w-3.5 h-3.5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                                        </svg>
+                                        <span>{fairLocation}</span>
                                     </span>
                                 )}
                                 {fairStartDate && (
                                     <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-200/70 px-2.5 py-1 text-xs font-semibold text-slate-800 border border-slate-300/60">
-                                        <span>📅</span> {fairStartDate} {fairEndDate ? ` al ${fairEndDate}` : ''}
+                                        <svg className="w-3.5 h-3.5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.253M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                                        </svg>
+                                        <span>{fairStartDate} {fairEndDate ? ` al ${fairEndDate}` : ''}</span>
                                     </span>
                                 )}
                                 <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-200 px-2.5 py-1 text-xs font-bold text-slate-900 border border-slate-300">
-                                    <span>🏷️</span> {discountPercentage}% Descuento aplicado
+                                    <svg className="w-3.5 h-3.5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.386a4.5 4.5 0 001.218-.988l4.318-4.318a4.5 4.5 0 00.988-1.218c.486-.827.313-1.908-.386-2.607L12.41 3.659A2.25 2.25 0 0010.82 3h-1.252z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" />
+                                    </svg>
+                                    <span>{discountPercentage}% Descuento aplicado</span>
                                 </span>
                             </div>
                         </div>
@@ -403,7 +426,10 @@ export default function BooksPage() {
                                 disabled={togglingStatus}
                                 className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold shadow-xs transition shrink-0 cursor-pointer disabled:opacity-50 bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-600 hover:text-white"
                             >
-                                {togglingStatus ? 'Guardando...' : '🏁 Finalizar Feria'}
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                                </svg>
+                                <span>{togglingStatus ? 'Guardando...' : 'Finalizar Feria'}</span>
                             </button>
                         )}
                     </div>
@@ -413,7 +439,11 @@ export default function BooksPage() {
                 {fairStatus === 'finalized' && (
                     <div className="mb-6 rounded-2xl border border-amber-300 bg-amber-50/90 p-4 text-slate-900 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
-                            <span className="text-2xl">🏁</span>
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-200/80 text-amber-900 border border-amber-300">
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                                </svg>
+                            </div>
                             <div>
                                 <h4 className="text-sm font-extrabold text-amber-900">Esta feria está finalizada (Modo Histórico y Consulta)</h4>
                                 <p className="text-xs text-amber-800 font-medium mt-0.5">
@@ -424,9 +454,12 @@ export default function BooksPage() {
                         <button
                             onClick={toggleFairStatusInDetail}
                             disabled={togglingStatus}
-                            className="rounded-xl bg-amber-900 text-white px-3.5 py-2 text-xs font-bold hover:bg-amber-950 transition whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50"
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-amber-900 text-white px-3.5 py-2 text-xs font-bold hover:bg-amber-950 transition whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50"
                         >
-                            {togglingStatus ? 'Reabriendo...' : '🔄 Reabrir Feria'}
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                            </svg>
+                            <span>{togglingStatus ? 'Reabriendo...' : 'Reabrir Feria'}</span>
                         </button>
                     </div>
                 )}
@@ -442,16 +475,23 @@ export default function BooksPage() {
                 {/* Empty state when no books exist */}
                 {!loading && books.length === 0 && (
                     <div className="rounded-2xl border border-slate-200 bg-[#fafafa] p-16 text-center shadow-xs">
-                        <p className="text-4xl mb-4">📚</p>
+                        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-600 border border-slate-200 shadow-2xs">
+                            <svg className="h-7 w-7 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>
+                        </div>
                         <p className="text-xl font-bold text-slate-900">No hay libros registrados en esta feria</p>
                         <p className="mt-1 text-sm font-medium text-slate-500 max-w-md mx-auto">
                             Añade tu primer libro para empezar a gestionar el stock y registrar ventas.
                         </p>
                         <button
                             onClick={() => setShowModal(true)}
-                            className="mt-6 rounded-xl bg-slate-900 px-6 py-3 text-sm font-bold text-white shadow-xs transition hover:bg-slate-800"
+                            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-slate-900 px-6 py-3 text-sm font-bold text-white shadow-xs transition hover:bg-slate-800 cursor-pointer"
                         >
-                            + Añadir Libro
+                            <svg className="w-4 h-4 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            <span>Añadir Libro</span>
                         </button>
                     </div>
                 )}
@@ -491,16 +531,22 @@ export default function BooksPage() {
                             <div className="flex items-center gap-3">
                                 <button
                                     onClick={() => setShowHistory(true)}
-                                    className="rounded-xl border border-slate-300 bg-slate-100 px-4 py-2.5 text-sm font-bold text-slate-800 transition hover:bg-slate-200/80 whitespace-nowrap shadow-xs cursor-pointer"
+                                    className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-slate-100 px-4 py-2.5 text-sm font-bold text-slate-800 transition hover:bg-slate-200/80 whitespace-nowrap shadow-xs cursor-pointer"
                                 >
-                                    📜 Historial
+                                    <svg className="w-4 h-4 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span>Historial</span>
                                 </button>
                                 {fairStatus !== 'finalized' && (
                                     <button
                                         onClick={() => setShowModal(true)}
-                                        className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800 whitespace-nowrap shadow-xs cursor-pointer"
+                                        className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800 whitespace-nowrap shadow-xs cursor-pointer"
                                     >
-                                        + Añadir Libro
+                                        <svg className="w-4 h-4 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                        </svg>
+                                        <span>Añadir Libro</span>
                                     </button>
                                 )}
                             </div>
@@ -587,31 +633,41 @@ export default function BooksPage() {
                                                  <td className="px-6 py-4 text-right">
                                                      <div className="flex items-center justify-end gap-2">
                                                          {fairStatus === 'finalized' ? (
-                                                             <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 text-slate-500 border border-slate-200 px-2.5 py-1 text-xs font-semibold">
-                                                                 🔒 Consulta
+                                                             <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 text-slate-500 border border-slate-200 px-2.5 py-1 text-xs font-semibold">
+                                                                 <svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                                                 </svg>
+                                                                 <span>Consulta</span>
                                                              </span>
                                                          ) : (
                                                              <>
                                                                  <button
                                                                      onClick={() => setSellingBook(book)}
-                                                                     className="inline-flex items-center gap-1 rounded-lg bg-emerald-100/80 px-2.5 py-1 text-xs font-bold text-emerald-800 border border-emerald-300 transition hover:bg-emerald-600 hover:text-white cursor-pointer"
+                                                                     className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-100/80 px-2.5 py-1 text-xs font-bold text-emerald-800 border border-emerald-300 transition hover:bg-emerald-600 hover:text-white cursor-pointer"
                                                                      title="Vender libro"
                                                                  >
-                                                                     🛒 Vender
+                                                                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                         <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+                                                                     </svg>
+                                                                     <span>Vender</span>
                                                                  </button>
                                                                  <button
                                                                      onClick={() => setEditingBook(book)}
                                                                      className="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-200 hover:text-slate-900 cursor-pointer"
                                                                      title="Editar libro"
                                                                  >
-                                                                     ✏️
+                                                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                         <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
+                                                                     </svg>
                                                                  </button>
                                                                  <button
                                                                      onClick={() => setDeletingBook(book)}
-                                                                     className="rounded-lg p-1.5 text-slate-500 transition hover:bg-red-100 hover:text-red-600 cursor-pointer"
+                                                                     className="rounded-lg p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 cursor-pointer"
                                                                      title="Eliminar libro"
                                                                  >
-                                                                     🗑️
+                                                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                         <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                                                     </svg>
                                                                  </button>
                                                              </>
                                                          )}
