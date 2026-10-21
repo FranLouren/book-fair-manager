@@ -124,13 +124,13 @@ export default function NewFairModal({ onClose, onCreated }: Props) {
                 <div className="mt-8 flex gap-3">
                     <button
                         onClick={onClose}
-                        className="flex-1 rounded-xl border border-slate-300 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-200/60">
+                        className="flex-1 rounded-xl border border-slate-300 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-200/60 cursor-pointer">
                         Cancelar
                     </button>
                     <button
                         onClick={handleSubmit}
                         disabled={saving}
-                        className="flex-1 rounded-xl bg-slate-900 py-3 text-sm font-bold text-white shadow-xs transition hover:bg-slate-800 disabled:opacity-50">
+                        className="flex-1 rounded-xl bg-slate-700 py-3 text-sm font-bold text-white shadow-xs transition hover:bg-slate-800 disabled:opacity-50 cursor-pointer">
                         {saving ? 'Guardando...' : 'Crear Feria'}
                     </button>
                 </div>

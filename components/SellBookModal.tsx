@@ -155,9 +155,9 @@ export default function SellBookModal({ book, discountPercentage, onClose, onSol
                                     key={num}
                                     type="button"
                                     onClick={() => setQuantity(num)}
-                                    className={`flex-1 rounded-xl border py-2.5 text-sm font-bold transition ${
+                                    className={`flex-1 rounded-xl border py-2.5 text-sm font-bold transition cursor-pointer ${
                                         quantity === num
-                                            ? 'border-slate-900 bg-slate-900 text-white'
+                                            ? 'border-slate-700 bg-slate-700 text-white'
                                             : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
                                     }`}
                                 >
@@ -182,7 +182,7 @@ export default function SellBookModal({ book, discountPercentage, onClose, onSol
                             <button
                                 type="button"
                                 onClick={() => setPaymentMethod('efectivo')}
-                                className={`flex items-center justify-center gap-2 rounded-xl border p-4 text-sm font-bold transition ${
+                                className={`flex items-center justify-center gap-2 rounded-xl border p-4 text-sm font-bold transition cursor-pointer ${
                                     paymentMethod === 'efectivo'
                                         ? 'border-emerald-600 bg-emerald-50 text-emerald-900 ring-2 ring-emerald-500/20'
                                         : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
@@ -197,9 +197,9 @@ export default function SellBookModal({ book, discountPercentage, onClose, onSol
                             <button
                                 type="button"
                                 onClick={() => setPaymentMethod('bizum')}
-                                className={`flex items-center justify-center gap-2 rounded-xl border p-4 text-sm font-bold transition ${
+                                className={`flex items-center justify-center gap-2 rounded-xl border p-4 text-sm font-bold transition cursor-pointer ${
                                     paymentMethod === 'bizum'
-                                        ? 'border-slate-900 bg-slate-900 text-white ring-2 ring-slate-800/20'
+                                        ? 'border-slate-700 bg-slate-700 text-white ring-2 ring-slate-700/20'
                                         : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
                                 }`}
                             >
@@ -225,7 +225,7 @@ export default function SellBookModal({ book, discountPercentage, onClose, onSol
                     <button
                         type="button"
                         onClick={onClose}
-                        className="flex-1 rounded-xl border border-slate-300 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-200/60"
+                        className="flex-1 rounded-xl border border-slate-300 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-200/60 cursor-pointer"
                     >
                         Cancelar
                     </button>
@@ -233,7 +233,7 @@ export default function SellBookModal({ book, discountPercentage, onClose, onSol
                         type="button"
                         onClick={handleConfirmSale}
                         disabled={selling || book.stock < 1}
-                        className="flex-1 rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:opacity-50 shadow-sm"
+                        className="flex-1 rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:opacity-50 shadow-sm cursor-pointer"
                     >
                         {selling ? 'Registrando...' : 'Confirmar Venta'}
                     </button>

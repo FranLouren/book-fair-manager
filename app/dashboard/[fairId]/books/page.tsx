@@ -317,11 +317,10 @@ export default function BooksPage() {
                         <button
                             onClick={handleLogout}
                             disabled={loggingOut}
-                            className={`flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold transition shadow-xs group ${
-                                loggingOut
+                            className={`flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold transition shadow-xs group ${loggingOut
                                     ? 'opacity-75 cursor-not-allowed text-slate-500 bg-slate-50'
                                     : 'text-slate-700 hover:bg-red-50 hover:text-red-600 hover:border-red-200 cursor-pointer'
-                            }`}
+                                }`}
                             title="Cerrar sesión"
                         >
                             {loggingOut ? (
@@ -344,14 +343,14 @@ export default function BooksPage() {
 
             {/* Main content area */}
             <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-                
+
                 {/* Page Breadcrumb & Title Header Banner */}
                 <div className="mb-6 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
                     {/* Breadcrumbs */}
                     <nav className="flex items-center gap-2 text-xs font-bold text-slate-500 mb-3">
                         <button
                             onClick={() => router.push('/dashboard')}
-                            className="hover:text-slate-900 hover:underline transition"
+                            className="hover:text-slate-900 hover:underline transition cursor-pointer"
                         >
                             Ferias
                         </button>
@@ -366,11 +365,10 @@ export default function BooksPage() {
                                 <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
                                     {fairName || `Feria #${fairId}`}
                                 </h2>
-                                <span className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-0.5 text-xs font-extrabold border ${
-                                    fairStatus === 'finalized'
+                                <span className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-0.5 text-xs font-extrabold border ${fairStatus === 'finalized'
                                         ? 'bg-amber-100 text-amber-900 border-amber-300'
                                         : 'bg-emerald-100 text-emerald-900 border-emerald-300'
-                                }`}>
+                                    }`}>
                                     {fairStatus === 'finalized' ? (
                                         <>
                                             <svg className="w-3.5 h-3.5 text-amber-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -486,7 +484,7 @@ export default function BooksPage() {
                         </p>
                         <button
                             onClick={() => setShowModal(true)}
-                            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-slate-900 px-6 py-3 text-sm font-bold text-white shadow-xs transition hover:bg-slate-800 cursor-pointer"
+                            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-slate-700 px-6 py-3 text-sm font-bold text-white shadow-xs transition hover:bg-slate-800 cursor-pointer"
                         >
                             <svg className="w-4 h-4 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -541,7 +539,7 @@ export default function BooksPage() {
                                 {fairStatus !== 'finalized' && (
                                     <button
                                         onClick={() => setShowModal(true)}
-                                        className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800 whitespace-nowrap shadow-xs cursor-pointer"
+                                        className="inline-flex items-center gap-2 rounded-xl bg-slate-700 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800 whitespace-nowrap shadow-xs cursor-pointer"
                                     >
                                         <svg className="w-4 h-4 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -588,91 +586,90 @@ export default function BooksPage() {
                                                     <div className="flex items-center justify-center gap-2">
                                                         <div className="w-16 shrink-0 flex justify-center">
                                                             <span
-                                                                 className={`inline-flex items-center justify-center w-full rounded-md px-2 py-1 text-sm font-mono transition ${
-                                                                     book.stock === 0
-                                                                         ? 'bg-rose-100 text-rose-700 font-extrabold border border-rose-300'
-                                                                         : 'bg-slate-200/80 text-slate-900 font-extrabold'
-                                                                 }`}
-                                                             >
-                                                                 {book.stock}
-                                                             </span>
-                                                         </div>
-                                                         {fairStatus !== 'finalized' && (
-                                                             <div className="flex items-center gap-1.5 shrink-0">
-                                                                 <button
-                                                                     onClick={() => {
-                                                                         setRestockError(null)
-                                                                         setAddedStock('5')
-                                                                         setStockMode('add')
-                                                                         setRestockBook(book)
-                                                                     }}
-                                                                     className="h-8 w-8 flex items-center justify-center rounded-lg bg-slate-900 text-sm font-bold text-white transition hover:bg-slate-800 shrink-0 shadow-2xs cursor-pointer"
-                                                                     title="Añadir stock rápido"
-                                                                 >
-                                                                     +
-                                                                 </button>
-                                                                 <button
-                                                                     onClick={() => {
-                                                                         setRestockError(null)
-                                                                         setAddedStock('1')
-                                                                         setStockMode('remove')
-                                                                         setRestockBook(book)
-                                                                     }}
-                                                                     className="h-8 w-8 flex items-center justify-center rounded-lg bg-rose-100 text-rose-700 border border-rose-300 text-sm font-bold transition hover:bg-rose-600 hover:text-white shrink-0 shadow-2xs cursor-pointer"
-                                                                     title="Retirar stock"
-                                                                 >
-                                                                     -
-                                                                 </button>
-                                                             </div>
-                                                         )}
-                                                     </div>
-                                                 </td>
-                                                 <td className="px-6 py-4 font-extrabold text-slate-900 text-center">
-                                                     {book.sold || 0}
-                                                 </td>
-                                                 <td className="px-6 py-4 text-right">
-                                                     <div className="flex items-center justify-end gap-2">
-                                                         {fairStatus === 'finalized' ? (
-                                                             <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 text-slate-500 border border-slate-200 px-2.5 py-1 text-xs font-semibold">
-                                                                 <svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                                                                 </svg>
-                                                                 <span>Consulta</span>
-                                                             </span>
-                                                         ) : (
-                                                             <>
-                                                                 <button
-                                                                     onClick={() => setSellingBook(book)}
-                                                                     className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-100/80 px-2.5 py-1 text-xs font-bold text-emerald-800 border border-emerald-300 transition hover:bg-emerald-600 hover:text-white cursor-pointer"
-                                                                     title="Vender libro"
-                                                                 >
-                                                                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                                         <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
-                                                                     </svg>
-                                                                     <span>Vender</span>
-                                                                 </button>
-                                                                 <button
-                                                                     onClick={() => setEditingBook(book)}
-                                                                     className="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-200 hover:text-slate-900 cursor-pointer"
-                                                                     title="Editar libro"
-                                                                 >
-                                                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                                         <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
-                                                                     </svg>
-                                                                 </button>
-                                                                 <button
-                                                                     onClick={() => setDeletingBook(book)}
-                                                                     className="rounded-lg p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 cursor-pointer"
-                                                                     title="Eliminar libro"
-                                                                 >
-                                                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                                         <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                                                                     </svg>
-                                                                 </button>
-                                                             </>
-                                                         )}
-                                                     </div>
-                                                 </td>
+                                                                className={`inline-flex items-center justify-center w-full rounded-md px-2 py-1 text-sm font-mono transition ${book.stock === 0
+                                                                        ? 'bg-rose-100 text-rose-700 font-extrabold border border-rose-300'
+                                                                        : 'bg-slate-200/80 text-slate-900 font-extrabold'
+                                                                    }`}
+                                                            >
+                                                                {book.stock}
+                                                            </span>
+                                                        </div>
+                                                        {fairStatus !== 'finalized' && (
+                                                            <div className="flex items-center gap-1.5 shrink-0">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setRestockError(null)
+                                                                        setAddedStock('5')
+                                                                        setStockMode('add')
+                                                                        setRestockBook(book)
+                                                                    }}
+                                                                    className="h-8 w-8 flex items-center justify-center rounded-lg bg-slate-700 text-sm font-bold text-white transition hover:bg-slate-800 shrink-0 shadow-2xs cursor-pointer"
+                                                                    title="Añadir stock rápido"
+                                                                >
+                                                                    +
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setRestockError(null)
+                                                                        setAddedStock('1')
+                                                                        setStockMode('remove')
+                                                                        setRestockBook(book)
+                                                                    }}
+                                                                    className="h-8 w-8 flex items-center justify-center rounded-lg bg-rose-100 text-rose-700 border border-rose-300 text-sm font-bold transition hover:bg-rose-600 hover:text-white shrink-0 shadow-2xs cursor-pointer"
+                                                                    title="Retirar stock"
+                                                                >
+                                                                    -
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 font-extrabold text-slate-900 text-center">
+                                                    {book.sold || 0}
+                                                </td>
+                                                <td className="px-6 py-4 text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        {fairStatus === 'finalized' ? (
+                                                            <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 text-slate-500 border border-slate-200 px-2.5 py-1 text-xs font-semibold">
+                                                                <svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                                                </svg>
+                                                                <span>Consulta</span>
+                                                            </span>
+                                                        ) : (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => setSellingBook(book)}
+                                                                    className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-100/80 px-2.5 py-1 text-xs font-bold text-emerald-800 border border-emerald-300 transition hover:bg-emerald-600 hover:text-white cursor-pointer"
+                                                                    title="Vender libro"
+                                                                >
+                                                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+                                                                    </svg>
+                                                                    <span>Vender</span>
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => setEditingBook(book)}
+                                                                    className="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-200 hover:text-slate-900 cursor-pointer"
+                                                                    title="Editar libro"
+                                                                >
+                                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
+                                                                    </svg>
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => setDeletingBook(book)}
+                                                                    className="rounded-lg p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 cursor-pointer"
+                                                                    title="Eliminar libro"
+                                                                >
+                                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                                                    </svg>
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </td>
                                             </tr>
                                         ))
                                     )}
@@ -778,13 +775,12 @@ export default function BooksPage() {
                                     key={val}
                                     type="button"
                                     onClick={() => setAddedStock(val)}
-                                    className={`flex-1 rounded-xl border py-2 text-xs font-bold transition ${
-                                        addedStock === val
+                                    className={`flex-1 rounded-xl border py-2 text-xs font-bold transition ${addedStock === val
                                             ? stockMode === 'add'
-                                                ? 'border-slate-900 bg-slate-900 text-white'
+                                                ? 'border-slate-700 bg-slate-700 text-white'
                                                 : 'border-rose-700 bg-rose-700 text-white'
                                             : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
-                                    }`}
+                                        }`}
                                 >
                                     {stockMode === 'add' ? `+${val}` : `-${val}`}
                                 </button>
@@ -834,11 +830,10 @@ export default function BooksPage() {
                             <button
                                 onClick={handleRestockSubmit}
                                 disabled={restocking}
-                                className={`rounded-xl px-4 py-2.5 text-sm font-bold text-white shadow-xs transition disabled:opacity-50 ${
-                                    stockMode === 'add'
-                                        ? 'bg-slate-900 hover:bg-slate-800'
+                                className={`rounded-xl px-4 py-2.5 text-sm font-bold text-white shadow-xs transition disabled:opacity-50 ${stockMode === 'add'
+                                        ? 'bg-slate-700 hover:bg-slate-800'
                                         : 'bg-rose-700 hover:bg-rose-800'
-                                }`}
+                                    }`}
                             >
                                 {restocking
                                     ? 'Guardando...'

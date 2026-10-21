@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { supabase } from '@/lib/supabase'
 import NewFairModal from '@/components/NewFairModal'
 import EditFairModal from '@/components/EditFairModal'
+import ManageAuthorsModal from '@/components/ManageAuthorsModal'
 import { useRouter } from 'next/navigation'
 
 // Type definition for a book fair record
@@ -23,6 +24,7 @@ export default function DashboardPage() {
     const [fairs, setFairs] = useState<Fair[]>([])
     const [loading, setLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)
+    const [showAuthorsModal, setShowAuthorsModal] = useState(false)
     const [editingFair, setEditingFair] = useState<Fair | null>(null)
     const [deletingFair, setDeletingFair] = useState<Fair | null>(null)
     const [deleting, setDeleting] = useState(false)
@@ -219,16 +221,29 @@ export default function DashboardPage() {
                             </div>
                         </div>
 
-                        {/* + Nueva Feria CTA Button - Dark Gray */}
-                        <button
-                            onClick={() => setShowModal(true)}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-700 px-5 py-2.5 text-sm font-bold text-white shadow-xs transition hover:bg-slate-800 hover:shadow-sm active:scale-[0.98] shrink-0 cursor-pointer"
-                        >
-                            <svg className="w-4 h-4 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                            </svg>
-                            <span>Nueva Feria</span>
-                        </button>
+                        {/* Action buttons: Gestionar Autores + Nueva Feria */}
+                        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                            <button
+                                onClick={() => setShowAuthorsModal(true)}
+                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-xs transition hover:bg-slate-100 hover:border-slate-400 active:scale-[0.98] cursor-pointer"
+                                title="Administrar catálogo de autores"
+                            >
+                                <svg className="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                                </svg>
+                                <span>Gestionar Autores</span>
+                            </button>
+
+                            <button
+                                onClick={() => setShowModal(true)}
+                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-700 px-5 py-2.5 text-sm font-bold text-white shadow-xs transition hover:bg-slate-800 hover:shadow-sm active:scale-[0.98] cursor-pointer"
+                            >
+                                <svg className="w-4 h-4 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                </svg>
+                                <span>Nueva Feria</span>
+                            </button>
+                        </div>
                     </div>
 
                     {/* Integrated Filter Tabs */}
@@ -355,7 +370,7 @@ export default function DashboardPage() {
                         {fairTabFilter === 'active' && (
                             <button
                                 onClick={() => setShowModal(true)}
-                                className="mt-6 rounded-xl bg-slate-900 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 cursor-pointer">
+                                className="mt-6 rounded-xl bg-slate-700 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 cursor-pointer">
                                 + Crear Primera Feria
                             </button>
                         )}
@@ -533,7 +548,7 @@ export default function DashboardPage() {
                             <button
                                 onClick={() => toggleFairStatus(finalizingFair)}
                                 disabled={loadingStatusId === finalizingFair.id}
-                                className={`rounded-xl px-4 py-2.5 text-sm font-bold text-white shadow-xs transition cursor-pointer disabled:opacity-50 ${finalizingFair.status === 'finalized' ? 'bg-slate-900 hover:bg-slate-800' : 'bg-amber-600 hover:bg-amber-700'
+                                className={`rounded-xl px-4 py-2.5 text-sm font-bold text-white shadow-xs transition cursor-pointer disabled:opacity-50 ${finalizingFair.status === 'finalized' ? 'bg-slate-700 hover:bg-slate-800' : 'bg-amber-600 hover:bg-amber-700'
                                     }`}
                             >
                                 {loadingStatusId === finalizingFair.id
@@ -580,6 +595,13 @@ export default function DashboardPage() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Modal for managing authors globally */}
+            {showAuthorsModal && (
+                <ManageAuthorsModal
+                    onClose={() => setShowAuthorsModal(false)}
+                />
             )}
         </div>
     )
