@@ -101,7 +101,7 @@ export default function AddBooksByAuthorModal({ fairId, onClose, onBooksAdded }:
 
     // Create a new author right from this modal in the global authors database
     async function handleCreateNewAuthor(customName?: string) {
-        const raw = typeof customName === 'string' ? customName : (newAuthorName.trim() || authorSearchQuery.trim())
+        const raw = (typeof customName === 'string' && customName.trim()) ? customName : (newAuthorName.trim() || authorSearchQuery.trim())
         const trimmed = raw.trim()
         if (!trimmed) {
             setNewAuthorError('Introduce el nombre del autor/a.')
@@ -503,7 +503,7 @@ export default function AddBooksByAuthorModal({ fairId, onClose, onBooksAdded }:
                                         {authorSearchQuery.trim() && (
                                             <button
                                                 type="button"
-                                                onClick={handleCreateNewAuthor}
+                                                onClick={() => handleCreateNewAuthor(authorSearchQuery)}
                                                 disabled={creatingAuthor}
                                                 className="inline-flex items-center justify-center gap-1.5 w-full rounded-lg bg-slate-700 px-3 py-2 text-xs font-bold text-white shadow-2xs hover:bg-slate-800 transition cursor-pointer"
                                             >
@@ -537,7 +537,7 @@ export default function AddBooksByAuthorModal({ fairId, onClose, onBooksAdded }:
                                         {authorSearchQuery.trim() && !filteredAuthors.some(a => a.name.toLowerCase() === authorSearchQuery.trim().toLowerCase()) && (
                                             <button
                                                 type="button"
-                                                onClick={handleCreateNewAuthor}
+                                                onClick={() => handleCreateNewAuthor(authorSearchQuery)}
                                                 disabled={creatingAuthor}
                                                 className="flex items-center gap-2 w-full rounded-lg px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 text-left transition cursor-pointer border-t border-slate-100 mt-1 pt-2"
                                             >
