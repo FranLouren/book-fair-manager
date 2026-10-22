@@ -1073,6 +1073,10 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
                                                         <span className="rounded-md bg-red-100 px-2.5 py-0.5 font-extrabold text-red-700 text-xs border border-red-200">
                                                             -{item.quantity} ud.
                                                         </span>
+                                                    ) : item.quantity === 0 ? (
+                                                        <span className="rounded-md bg-slate-100 px-2.5 py-0.5 font-extrabold text-slate-700 text-xs border border-slate-300">
+                                                            0 ud.
+                                                        </span>
                                                     ) : item.quantity < 0 ? (
                                                         <span className="rounded-md bg-rose-100 px-2.5 py-0.5 font-extrabold text-rose-700 text-xs border border-rose-200">
                                                             {item.quantity} ud.

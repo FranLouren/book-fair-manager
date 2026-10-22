@@ -20,6 +20,7 @@ export default function ManageAuthorsModal({ onClose, onUpdated }: Props) {
     const [searchQuery, setSearchQuery] = useState('')
 
     // New author state
+    const [showAddForm, setShowAddForm] = useState(false)
     const [newAuthorName, setNewAuthorName] = useState('')
     const [addingAuthor, setAddingAuthor] = useState(false)
     const [addError, setAddError] = useState<string | null>(null)
@@ -123,6 +124,7 @@ export default function ManageAuthorsModal({ onClose, onUpdated }: Props) {
         }
 
         setNewAuthorName('')
+        setShowAddForm(false)
         setAddSuccess(`Autor "${trimmed}" añadido correctamente.`)
         setTimeout(() => setAddSuccess(null), 3000)
         setAddingAuthor(false)
@@ -263,24 +265,27 @@ export default function ManageAuthorsModal({ onClose, onUpdated }: Props) {
                     </button>
                 </div>
 
-                {/* Form to Add Author */}
+                {/* Search Bar & Action Toolbar */}
                 <div className="px-6 py-4 bg-slate-50/70 border-b border-slate-200 shrink-0">
-                    <form onSubmit={handleAddAuthor} className="flex flex-col sm:flex-row items-stretch gap-2.5">
+                    <div className="flex items-center justify-between gap-3">
+                        {/* Search Input (Primary initial focus) */}
                         <div className="relative flex-1">
+                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
+                                <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                                </svg>
+                            </div>
                             <input
                                 type="text"
-                                placeholder="Escribe el nombre del nuevo autor o autora..."
-                                value={newAuthorName}
-                                onChange={e => {
-                                    setNewAuthorName(e.target.value)
-                                    if (addError) setAddError(null)
-                                }}
-                                className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10"
+                                placeholder="Buscar autor por nombre..."
+                                value={searchQuery}
+                                onChange={e => setSearchQuery(e.target.value)}
+                                className="h-10 w-full rounded-xl border border-slate-300 bg-white pl-10 pr-9 text-sm font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10"
                             />
-                            {newAuthorName && (
+                            {searchQuery && (
                                 <button
                                     type="button"
-                                    onClick={() => setNewAuthorName('')}
+                                    onClick={() => setSearchQuery('')}
                                     className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
                                 >
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -290,25 +295,90 @@ export default function ManageAuthorsModal({ onClose, onUpdated }: Props) {
                             )}
                         </div>
 
+                        {/* Button to toggle New Author Form */}
                         <button
-                            type="submit"
-                            disabled={addingAuthor || !newAuthorName.trim()}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-700 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs transition hover:bg-slate-800 disabled:opacity-50 shrink-0 cursor-pointer"
+                            type="button"
+                            onClick={() => {
+                                setShowAddForm(prev => !prev)
+                                setAddError(null)
+                                if (!showAddForm && searchQuery.trim()) {
+                                    setNewAuthorName(searchQuery.trim())
+                                }
+                            }}
+                            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-700 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs transition hover:bg-slate-800 shrink-0 cursor-pointer"
                         >
                             <svg className="w-4 h-4 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d={showAddForm ? "M6 18L18 6M6 6l12 12" : "M12 4.5v15m7.5-7.5h-15"} />
                             </svg>
-                            <span>{addingAuthor ? 'Guardando...' : 'Añadir Autor'}</span>
+                            <span>{showAddForm ? 'Cerrar' : 'Añadir Autor'}</span>
                         </button>
-                    </form>
+                    </div>
+
+                    {/* Expandable Form to Add New Author */}
+                    {showAddForm && (
+                        <form onSubmit={handleAddAuthor} className="mt-3 pt-3 border-t border-slate-200/80 flex flex-col sm:flex-row items-stretch gap-2.5">
+                            <div className="relative flex-1">
+                                <input
+                                    type="text"
+                                    placeholder="Escribe el nombre del nuevo autor o autora..."
+                                    value={newAuthorName}
+                                    onChange={e => {
+                                        setNewAuthorName(e.target.value)
+                                        if (addError) setAddError(null)
+                                    }}
+                                    autoFocus
+                                    className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10"
+                                />
+                                {newAuthorName && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setNewAuthorName('')}
+                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowAddForm(false)
+                                        setNewAuthorName('')
+                                        setAddError(null)
+                                    }}
+                                    className="rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={addingAuthor || !newAuthorName.trim()}
+                                    className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-700 px-4 py-2 text-xs sm:text-sm font-bold text-white shadow-xs transition hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
+                                >
+                                    {addingAuthor ? (
+                                        <>
+                                            <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                                            <span>Guardando...</span>
+                                        </>
+                                    ) : (
+                                        <span>Guardar</span>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    )}
 
                     {addError && (
-                        <div className="mt-2.5 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs font-semibold text-red-700">
+                        <div className="mt-2.5 rounded-xl bg-red-50 border border-red-200 px-3 py-2 text-xs font-semibold text-red-700">
                             {addError}
                         </div>
                     )}
                     {addSuccess && (
-                        <div className="mt-2.5 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-xs font-semibold text-emerald-800 flex items-center gap-1.5">
+                        <div className="mt-2.5 rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2 text-xs font-semibold text-emerald-800 flex items-center gap-1.5">
                             <svg className="w-4 h-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                             </svg>
@@ -317,24 +387,10 @@ export default function ManageAuthorsModal({ onClose, onUpdated }: Props) {
                     )}
                 </div>
 
-                {/* Search Bar & Total Counter */}
-                <div className="px-6 py-3 border-b border-slate-100 bg-white flex items-center justify-between gap-4 shrink-0">
-                    <div className="relative flex-1 max-w-sm">
-                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                            <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                            </svg>
-                        </div>
-                        <input
-                            type="text"
-                            placeholder="Filtrar por nombre..."
-                            value={searchQuery}
-                            onChange={e => setSearchQuery(e.target.value)}
-                            className="h-9 w-full rounded-xl border border-slate-200 bg-slate-50/60 pl-9 pr-3 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-slate-800 focus:bg-white"
-                        />
-                    </div>
-
-                    <span className="text-xs font-bold text-slate-500 whitespace-nowrap">
+                {/* Total Counter Sub-bar */}
+                <div className="px-6 py-2.5 border-b border-slate-100 bg-white flex items-center justify-between text-xs font-bold text-slate-500 shrink-0">
+                    <span>Lista de autores</span>
+                    <span>
                         {filteredAuthors.length} de {authors.length} {authors.length === 1 ? 'autor' : 'autores'}
                     </span>
                 </div>
@@ -358,9 +414,24 @@ export default function ManageAuthorsModal({ onClose, onUpdated }: Props) {
                             </p>
                             <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
                                 {searchQuery
-                                    ? 'Prueba con otro término o añade el autor directamente en el campo superior.'
-                                    : 'Añade el primer autor arriba para empezar a organizar tus ferias.'}
+                                    ? 'Prueba con otro término o pulsa en "Añadir Autor" para registrarlo.'
+                                    : 'Pulsa en "Añadir Autor" arriba para registrar el primer autor.'}
                             </p>
+                            {searchQuery && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setNewAuthorName(searchQuery.trim())
+                                        setShowAddForm(true)
+                                    }}
+                                    className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-slate-700 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 transition cursor-pointer"
+                                >
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                    </svg>
+                                    <span>Crear &quot;{searchQuery}&quot; como nuevo autor</span>
+                                </button>
+                            )}
                         </div>
                     ) : (
                         <div className="divide-y divide-slate-100">

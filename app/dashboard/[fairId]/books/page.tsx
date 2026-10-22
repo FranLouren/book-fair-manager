@@ -7,6 +7,7 @@ import NewBookModal from '@/components/NewBookModal'
 import EditBookModal from '@/components/EditBookModal'
 import SellBookModal from '@/components/SellBookModal'
 import HistoryModal from '@/components/HistoryModal'
+import AddBooksByAuthorModal from '@/components/AddBooksByAuthorModal'
 
 // Type definition for a Book record
 type Book = {
@@ -38,6 +39,7 @@ export default function BooksPage() {
     const [books, setBooks] = useState<Book[]>([])
     const [loading, setLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)
+    const [showBatchAuthorModal, setShowBatchAuthorModal] = useState(false)
     const [showHistory, setShowHistory] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
     const [sellingBook, setSellingBook] = useState<Book | null>(null)
@@ -480,16 +482,16 @@ export default function BooksPage() {
                         </div>
                         <p className="text-xl font-bold text-slate-900">No hay libros registrados en esta feria</p>
                         <p className="mt-1 text-sm font-medium text-slate-500 max-w-md mx-auto">
-                            Añade tu primer libro para empezar a gestionar el stock y registrar ventas.
+                            Añade los libros seleccionando sus autores para gestionar el stock y registrar ventas.
                         </p>
                         <button
-                            onClick={() => setShowModal(true)}
+                            onClick={() => setShowBatchAuthorModal(true)}
                             className="mt-6 inline-flex items-center gap-2 rounded-xl bg-slate-700 px-6 py-3 text-sm font-bold text-white shadow-xs transition hover:bg-slate-800 cursor-pointer"
                         >
                             <svg className="w-4 h-4 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                             </svg>
-                            <span>Añadir Libro</span>
+                            <span>Añadir Libros</span>
                         </button>
                     </div>
                 )}
@@ -538,13 +540,13 @@ export default function BooksPage() {
                                 </button>
                                 {fairStatus !== 'finalized' && (
                                     <button
-                                        onClick={() => setShowModal(true)}
+                                        onClick={() => setShowBatchAuthorModal(true)}
                                         className="inline-flex items-center gap-2 rounded-xl bg-slate-700 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800 whitespace-nowrap shadow-xs cursor-pointer"
                                     >
                                         <svg className="w-4 h-4 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                                         </svg>
-                                        <span>Añadir Libro</span>
+                                        <span>Añadir Libros</span>
                                     </button>
                                 )}
                             </div>
@@ -844,6 +846,17 @@ export default function BooksPage() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Modal for adding books by author */}
+            {showBatchAuthorModal && (
+                <AddBooksByAuthorModal
+                    fairId={fairId}
+                    onClose={() => setShowBatchAuthorModal(false)}
+                    onBooksAdded={() => {
+                        loadBooks()
+                    }}
+                />
             )}
         </div>
     )
