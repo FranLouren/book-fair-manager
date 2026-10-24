@@ -66,16 +66,15 @@ export default function LoginPage() {
                     {/* Email Input */}
                     <div>
                         <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
-                            Correo electrónico
+                            Correo Electrónico
                         </label>
                         <input
                             id="email"
                             type="email"
-                            placeholder="tu-email@ejemplo.com"
                             value={email}
                             onChange={e => setEmail(e.target.value)}
                             required
-                            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20"
+                            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20"
                         />
                     </div>
 
@@ -87,18 +86,19 @@ export default function LoginPage() {
                         <input
                             id="password"
                             type="password"
-                            placeholder="••••••••"
                             value={password}
                             onChange={e => setPassword(e.target.value)}
                             required
-                            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20"
+                            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20"
                         />
                     </div>
 
                     {/* Error Feedback */}
                     {error && (
                         <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 font-medium flex items-center gap-2">
-                            <span>⚠️</span>
+                            <svg className="w-4 h-4 shrink-0 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                            </svg>
                             <span>{error}</span>
                         </div>
                     )}

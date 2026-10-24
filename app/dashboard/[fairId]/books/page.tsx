@@ -472,32 +472,8 @@ export default function BooksPage() {
                     </div>
                 )}
 
-                {/* Empty state when no books exist */}
-                {!loading && books.length === 0 && (
-                    <div className="rounded-2xl border border-slate-200 bg-[#fafafa] p-16 text-center shadow-xs">
-                        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-600 border border-slate-200 shadow-2xs">
-                            <svg className="h-7 w-7 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                            </svg>
-                        </div>
-                        <p className="text-xl font-bold text-slate-900">No hay libros registrados en esta feria</p>
-                        <p className="mt-1 text-sm font-medium text-slate-500 max-w-md mx-auto">
-                            Añade los libros seleccionando sus autores para gestionar el stock y registrar ventas.
-                        </p>
-                        <button
-                            onClick={() => setShowBatchAuthorModal(true)}
-                            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-slate-700 px-6 py-3 text-sm font-bold text-white shadow-xs transition hover:bg-slate-800 cursor-pointer"
-                        >
-                            <svg className="w-4 h-4 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                            </svg>
-                            <span>Añadir Libros</span>
-                        </button>
-                    </div>
-                )}
-
-                {/* Card Container with Integrated Toolbar and Table */}
-                {!loading && books.length > 0 && (
+                {/* Card Container with Integrated Toolbar and Table / Empty State */}
+                {!loading && (
                     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-[#fafafa] shadow-xs">
                         {/* Integrated Table Header Toolbar */}
                         <div className="flex flex-col gap-4 border-b border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -552,8 +528,22 @@ export default function BooksPage() {
                             </div>
                         </div>
 
-                        {/* Table Content */}
-                        <div className="overflow-x-auto">
+                        {/* Content: Empty state or Table */}
+                        {books.length === 0 ? (
+                            <div className="p-16 text-center">
+                                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-600 border border-slate-200 shadow-2xs">
+                                    <svg className="h-7 w-7 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                    </svg>
+                                </div>
+                                <p className="text-xl font-bold text-slate-900">No hay libros registrados en esta feria</p>
+                                <p className="mt-1 text-sm font-medium text-slate-500 max-w-md mx-auto">
+                                    Añade los libros seleccionando sus autores para gestionar el stock y registrar ventas.
+                                </p>
+                            </div>
+                        ) : (
+                            /* Table Content */
+                            <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm text-slate-900">
                                 <thead className="border-b border-slate-200 bg-slate-100/80 text-xs font-bold uppercase tracking-wider text-slate-700">
                                     <tr>
@@ -678,6 +668,7 @@ export default function BooksPage() {
                                 </tbody>
                             </table>
                         </div>
+                        )}
                     </div>
                 )}
             </main>

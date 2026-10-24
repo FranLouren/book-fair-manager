@@ -643,7 +643,6 @@ export default function AddBooksByAuthorModal({ fairId, onClose, onBooksAdded }:
                                             <label className="text-[11px] font-bold text-slate-700 mb-1 block">Título *</label>
                                             <input
                                                 type="text"
-                                                placeholder="Ej. La sombra del viento"
                                                 value={newTitle}
                                                 onChange={e => setNewTitle(e.target.value)}
                                                 className="h-8.5 w-full rounded-lg border border-slate-300 bg-white px-3 text-xs text-slate-900 outline-none focus:border-slate-800"
@@ -653,7 +652,6 @@ export default function AddBooksByAuthorModal({ fairId, onClose, onBooksAdded }:
                                             <label className="text-[11px] font-bold text-slate-700 mb-1 block">ISBN *</label>
                                             <input
                                                 type="text"
-                                                placeholder="978-..."
                                                 value={newIsbn}
                                                 onChange={e => setNewIsbn(e.target.value)}
                                                 className="h-8.5 w-full rounded-lg border border-slate-300 bg-white px-3 text-xs text-slate-900 outline-none focus:border-slate-800 font-mono"
@@ -666,7 +664,6 @@ export default function AddBooksByAuthorModal({ fairId, onClose, onBooksAdded }:
                                         <input
                                             type="number"
                                             step="0.01"
-                                            placeholder="18.00"
                                             value={newPrice}
                                             onChange={e => setNewPrice(e.target.value)}
                                             className="h-8.5 w-full rounded-lg border border-slate-300 bg-white px-3 text-xs text-slate-900 outline-none focus:border-slate-800"
@@ -888,11 +885,10 @@ export default function AddBooksByAuthorModal({ fairId, onClose, onBooksAdded }:
                                 </label>
                                 <input
                                     type="text"
-                                    placeholder="Nombre del autor o autora"
                                     value={newAuthorName}
                                     onChange={e => setNewAuthorName(e.target.value)}
                                     autoFocus
-                                    className="h-9.5 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10"
+                                    className="h-9.5 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10"
                                 />
                                 <p className="text-[11px] text-slate-500 mt-1">
                                     Se guardará en la base de datos general de autores y estará disponible en el dashboard y en todas las ferias.

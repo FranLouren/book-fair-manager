@@ -241,7 +241,6 @@ export default function NewBookModal({ fairId, onClose, onCreated }: Props) {
                             </div>
                             <input
                                 type="text"
-                                placeholder="Introduce el título de la obra..."
                                 value={title}
                                 onChange={e => {
                                     setTitle(e.target.value)
@@ -249,7 +248,7 @@ export default function NewBookModal({ fairId, onClose, onCreated }: Props) {
                                         setMissingFields(prev => prev.filter(f => f !== 'Título'))
                                     }
                                 }}
-                                className={`h-10 w-full rounded-xl border pl-9.5 pr-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition ${missingFields.includes('Título')
+                                className={`h-10 w-full rounded-xl border pl-9.5 pr-3 text-sm text-slate-900 outline-none transition ${missingFields.includes('Título')
                                         ? 'border-red-400 bg-red-50/20 focus:border-red-500 focus:ring-2 focus:ring-red-500/10'
                                         : 'border-slate-300 bg-slate-50/50 hover:bg-white hover:border-slate-400 focus:bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10'
                                     }`}
@@ -397,7 +396,6 @@ export default function NewBookModal({ fairId, onClose, onCreated }: Props) {
                             </div>
                             <input
                                 type="text"
-                                placeholder="Introduce el código ISBN..."
                                 value={isbn}
                                 onChange={e => {
                                     setIsbn(e.target.value)
@@ -405,7 +403,7 @@ export default function NewBookModal({ fairId, onClose, onCreated }: Props) {
                                         setMissingFields(prev => prev.filter(f => f !== 'ISBN'))
                                     }
                                 }}
-                                className={`h-10 w-full rounded-xl border pl-9.5 pr-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition ${missingFields.includes('ISBN')
+                                className={`h-10 w-full rounded-xl border pl-9.5 pr-3 text-sm text-slate-900 outline-none transition ${missingFields.includes('ISBN')
                                         ? 'border-red-400 bg-red-50/20 focus:border-red-500 focus:ring-2 focus:ring-red-500/10'
                                         : 'border-slate-300 bg-slate-50/50 hover:bg-white hover:border-slate-400 focus:bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10'
                                     }`}
@@ -434,7 +432,6 @@ export default function NewBookModal({ fairId, onClose, onCreated }: Props) {
                                 <input
                                     type="number"
                                     step="0.01"
-                                    placeholder="0.00"
                                     value={price}
                                     onChange={e => {
                                         setPrice(e.target.value)
@@ -442,7 +439,7 @@ export default function NewBookModal({ fairId, onClose, onCreated }: Props) {
                                             setMissingFields(prev => prev.filter(f => f !== 'Precio'))
                                         }
                                     }}
-                                    className={`h-10 w-full rounded-xl border pl-9.5 pr-7 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition ${missingFields.includes('Precio')
+                                    className={`h-10 w-full rounded-xl border pl-9.5 pr-7 text-sm text-slate-900 outline-none transition ${missingFields.includes('Precio')
                                             ? 'border-red-400 bg-red-50/20 focus:border-red-500 focus:ring-2 focus:ring-red-500/10'
                                             : 'border-slate-300 bg-slate-50/50 hover:bg-white hover:border-slate-400 focus:bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10'
                                         }`}
@@ -472,7 +469,6 @@ export default function NewBookModal({ fairId, onClose, onCreated }: Props) {
                                 <input
                                     type="number"
                                     min="1"
-                                    placeholder="1"
                                     value={stock}
                                     onChange={e => {
                                         setStock(e.target.value)
@@ -480,7 +476,7 @@ export default function NewBookModal({ fairId, onClose, onCreated }: Props) {
                                             setMissingFields(prev => prev.filter(f => f !== 'Stock'))
                                         }
                                     }}
-                                    className={`h-10 w-full rounded-xl border pl-9.5 pr-11 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition ${missingFields.includes('Stock')
+                                    className={`h-10 w-full rounded-xl border pl-9.5 pr-11 text-sm text-slate-900 outline-none transition ${missingFields.includes('Stock')
                                             ? 'border-red-400 bg-red-50/20 focus:border-red-500 focus:ring-2 focus:ring-red-500/10'
                                             : 'border-slate-300 bg-slate-50/50 hover:bg-white hover:border-slate-400 focus:bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10'
                                         }`}
@@ -547,11 +543,10 @@ export default function NewBookModal({ fairId, onClose, onCreated }: Props) {
                             <label className="text-xs font-medium text-slate-700">Nombre completo</label>
                             <input
                                 type="text"
-                                placeholder="Nombre del autor o autora"
                                 value={newAuthorName}
                                 onChange={e => setNewAuthorName(e.target.value)}
                                 autoFocus
-                                className="h-9.5 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-slate-900"
+                                className="h-9.5 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-slate-900"
                             />
                         </div>
 

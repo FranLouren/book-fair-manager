@@ -320,14 +320,13 @@ export default function ManageAuthorsModal({ onClose, onUpdated }: Props) {
                             <div className="relative flex-1">
                                 <input
                                     type="text"
-                                    placeholder="Escribe el nombre del nuevo autor o autora..."
                                     value={newAuthorName}
                                     onChange={e => {
                                         setNewAuthorName(e.target.value)
                                         if (addError) setAddError(null)
                                     }}
                                     autoFocus
-                                    className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10"
+                                    className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-900 outline-none transition focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10"
                                 />
                                 {newAuthorName && (
                                     <button

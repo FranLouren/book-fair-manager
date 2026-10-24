@@ -57,11 +57,10 @@ export default function NewFairModal({ onClose, onCreated }: Props) {
                         </label>
                         <input
                             type="text"
-                            placeholder="Ej. Feria del Libro de León 2026"
                             value={name}
                             onChange={e => setName(e.target.value)}
                             required
-                            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 font-medium placeholder:text-slate-400 outline-none transition focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10"
+                            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 font-medium outline-none transition focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10"
                         />
                     </div>
 
@@ -71,10 +70,9 @@ export default function NewFairModal({ onClose, onCreated }: Props) {
                         </label>
                         <input
                             type="text"
-                            placeholder="Ej. Plaza de Regla, León"
                             value={location}
                             onChange={e => setLocation(e.target.value)}
-                            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 font-medium placeholder:text-slate-400 outline-none transition focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10"
+                            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 font-medium outline-none transition focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10"
                         />
                     </div>
 
@@ -87,11 +85,10 @@ export default function NewFairModal({ onClose, onCreated }: Props) {
                             min="0"
                             max="100"
                             step="0.5"
-                            placeholder="Ej. 10"
                             value={discountPercentage}
                             onChange={e => setDiscountPercentage(e.target.value)}
                             required
-                            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 font-medium placeholder:text-slate-400 outline-none transition focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10"
+                            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 font-medium outline-none transition focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10"
                         />
                     </div>
 
