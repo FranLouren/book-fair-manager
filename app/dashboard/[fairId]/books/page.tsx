@@ -42,7 +42,7 @@ export default function BooksPage() {
     const [showBatchAuthorModal, setShowBatchAuthorModal] = useState(false)
     const [showHistory, setShowHistory] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
-    const [sellingBook, setSellingBook] = useState<Book | null>(null)
+    const [showSellModal, setShowSellModal] = useState(false)
     const [editingBook, setEditingBook] = useState<Book | null>(null)
     const [deletingBook, setDeletingBook] = useState<Book | null>(null)
     const [deleting, setDeleting] = useState(false)
@@ -515,15 +515,27 @@ export default function BooksPage() {
                                     <span>Historial</span>
                                 </button>
                                 {fairStatus !== 'finalized' && (
-                                    <button
-                                        onClick={() => setShowBatchAuthorModal(true)}
-                                        className="inline-flex items-center gap-2 rounded-xl bg-slate-700 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800 whitespace-nowrap shadow-xs cursor-pointer"
-                                    >
-                                        <svg className="w-4 h-4 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                        </svg>
-                                        <span>Añadir Libros</span>
-                                    </button>
+                                    <>
+                                        <button
+                                            onClick={() => setShowBatchAuthorModal(true)}
+                                            className="inline-flex items-center gap-2 rounded-xl bg-slate-700 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800 whitespace-nowrap shadow-xs cursor-pointer"
+                                        >
+                                            <svg className="w-4 h-4 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                            </svg>
+                                            <span>Añadir Libros</span>
+                                        </button>
+                                        <button
+                                            onClick={() => setShowSellModal(true)}
+                                            disabled={books.length === 0}
+                                            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-700 whitespace-nowrap shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            <svg className="w-4 h-4 text-emerald-100" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+                                            </svg>
+                                            <span>Vender</span>
+                                        </button>
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -631,16 +643,6 @@ export default function BooksPage() {
                                                         ) : (
                                                             <>
                                                                 <button
-                                                                    onClick={() => setSellingBook(book)}
-                                                                    className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-100/80 px-2.5 py-1 text-xs font-bold text-emerald-800 border border-emerald-300 transition hover:bg-emerald-600 hover:text-white cursor-pointer"
-                                                                    title="Vender libro"
-                                                                >
-                                                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
-                                                                    </svg>
-                                                                    <span>Vender</span>
-                                                                </button>
-                                                                <button
                                                                     onClick={() => setEditingBook(book)}
                                                                     className="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-200 hover:text-slate-900 cursor-pointer"
                                                                     title="Editar libro"
@@ -689,15 +691,17 @@ export default function BooksPage() {
                     fairName={fairName}
                     books={books}
                     onClose={() => setShowHistory(false)}
+                    onUpdated={loadBooks}
                 />
             )}
 
-            {/* Modal for selling a book */}
-            {sellingBook && (
+            {/* Modal for selling books */}
+            {showSellModal && (
                 <SellBookModal
-                    book={sellingBook}
+                    fairId={Number(fairId)}
+                    books={books}
                     discountPercentage={discountPercentage}
-                    onClose={() => setSellingBook(null)}
+                    onClose={() => setShowSellModal(false)}
                     onSold={loadBooks}
                 />
             )}

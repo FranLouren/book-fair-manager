@@ -21,6 +21,7 @@ type Props = {
     fairName: string
     books: Book[]
     onClose: () => void
+    onUpdated?: () => void
 }
 
 type HistoryItem = {
@@ -37,6 +38,9 @@ type HistoryItem = {
     payment_method?: 'efectivo' | 'bizum'
     movement_type?: 'initial' | 'restock' | 'adjustment' | string
     notes?: string | null
+    sale_id?: number
+    sale_item_id?: number
+    stock_movement_id?: number
 }
 
 type SelectedFilter = {
@@ -53,9 +57,14 @@ function getLocalDateString(date: Date) {
     return `${year}-${month}-${day}`
 }
 
-export default function HistoryModal({ fairId, fairName, books, onClose }: Props) {
+export default function HistoryModal({ fairId, fairName, books, onClose, onUpdated }: Props) {
     const [loading, setLoading] = useState(true)
     const [historyItems, setHistoryItems] = useState<HistoryItem[]>([])
+
+    // Undo transaction state
+    const [undoingItem, setUndoingItem] = useState<HistoryItem | null>(null)
+    const [isUndoing, setIsUndoing] = useState(false)
+    const [undoError, setUndoError] = useState<string | null>(null)
 
     // Combobox & Filter states
     const [searchInputValue, setSearchInputValue] = useState<string>('')
@@ -150,6 +159,8 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
                             unit_price: unitPrice,
                             total_price: unitPrice * qty,
                             payment_method: s.payment_method,
+                            sale_id: s.id,
+                            sale_item_id: item.id,
                         })
                     })
                 } else {
@@ -165,6 +176,7 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
                         unit_price: Number(s.total || 0),
                         total_price: Number(s.total || 0),
                         payment_method: s.payment_method,
+                        sale_id: s.id,
                     })
                 }
             })
@@ -183,6 +195,7 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
                     quantity: Number(st.quantity || 0),
                     movement_type: st.movement_type,
                     notes: st.notes || null,
+                    stock_movement_id: st.id,
                 })
             })
         }
@@ -192,6 +205,172 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
 
         setHistoryItems(unified)
         setLoading(false)
+    }
+
+    // Check if a stock movement is blocked from being undone because units have already been sold
+    function getUndoRestriction(item: HistoryItem): string | null {
+        if (item.type !== 'stock') return null
+
+        const soldUnits = historyItems
+            .filter(h => h.type === 'sale' && h.book_id === item.book_id)
+            .reduce((acc, h) => acc + h.quantity, 0)
+
+        // 1. Stock inicial: no se puede borrar si ya existen ventas de este libro
+        if (item.movement_type === 'initial' && soldUnits > 0) {
+            return `Bloqueado: ya hay ${soldUnits} ${soldUnits === 1 ? 'unidad vendida' : 'unidades vendidas'} de este libro.`
+        }
+
+        // 2. Entradas positivas de stock (reposición o inicial): no se puede deshacer si el stock actual es menor que lo añadido
+        if (item.quantity > 0) {
+            const book = books.find(b => b.id === item.book_id)
+            const currentStock = book ? book.stock : 0
+            if (currentStock < item.quantity) {
+                return `Bloqueado: solo quedan ${currentStock} ud. en stock (ya se vendieron unidades de esta entrada).`
+            }
+        }
+
+        return null
+    }
+
+    async function handleConfirmUndo() {
+        if (!undoingItem) return
+        setIsUndoing(true)
+        setUndoError(null)
+
+        try {
+            if (undoingItem.type === 'sale') {
+                // 1. Delete sale_item first (or sale if legacy)
+                if (undoingItem.sale_item_id) {
+                    const { data: deletedItem, error: itemErr } = await supabase
+                        .from('sale_items')
+                        .delete()
+                        .eq('id', undoingItem.sale_item_id)
+                        .select()
+
+                    if (itemErr) {
+                        throw new Error('Error al anular venta: ' + itemErr.message)
+                    }
+                    if (!deletedItem || deletedItem.length === 0) {
+                        throw new Error('Supabase bloqueó el borrado (comprueba permisos DELETE en sale_items).')
+                    }
+                } else if (undoingItem.sale_id) {
+                    const { data: deletedSale, error: saleErr } = await supabase
+                        .from('sales')
+                        .delete()
+                        .eq('id', undoingItem.sale_id)
+                        .select()
+
+                    if (saleErr) {
+                        throw new Error('Error al anular venta: ' + saleErr.message)
+                    }
+                    if (!deletedSale || deletedSale.length === 0) {
+                        throw new Error('Supabase bloqueó el borrado (comprueba permisos DELETE en sales).')
+                    }
+                }
+
+                // 2. Restore book stock
+                if (undoingItem.book_id > 0) {
+                    const { data: currentBook } = await supabase
+                        .from('books')
+                        .select('stock')
+                        .eq('id', undoingItem.book_id)
+                        .single()
+
+                    const curStock = currentBook ? Number(currentBook.stock) : 0
+                    const restoredStock = curStock + undoingItem.quantity
+                    const { error: stockErr } = await supabase
+                        .from('books')
+                        .update({ stock: restoredStock })
+                        .eq('id', undoingItem.book_id)
+
+                    if (stockErr) {
+                        console.error('Error restoring stock:', stockErr)
+                    }
+                }
+
+                // 3. Update or delete parent sale if sale_item_id existed
+                if (undoingItem.sale_item_id && undoingItem.sale_id) {
+                    const { data: remainingItems } = await supabase
+                        .from('sale_items')
+                        .select('id, price_at_sale, quantity')
+                        .eq('sale_id', undoingItem.sale_id)
+
+                    if (!remainingItems || remainingItems.length === 0) {
+                        await supabase
+                            .from('sales')
+                            .delete()
+                            .eq('id', undoingItem.sale_id)
+                    } else {
+                        const newTotal = remainingItems.reduce(
+                            (acc, it) => acc + Number(it.price_at_sale || 0) * Number(it.quantity || 1),
+                            0
+                        )
+                        await supabase
+                            .from('sales')
+                            .update({ total: parseFloat(newTotal.toFixed(2)) })
+                            .eq('id', undoingItem.sale_id)
+                    }
+                }
+            } else if (undoingItem.type === 'stock') {
+                // 0. Live validation before deleting
+                const restriction = getUndoRestriction(undoingItem)
+                if (restriction) {
+                    throw new Error(restriction)
+                }
+
+                let curStock = 0
+                if (undoingItem.book_id > 0) {
+                    const { data: currentBook } = await supabase
+                        .from('books')
+                        .select('stock')
+                        .eq('id', undoingItem.book_id)
+                        .single()
+
+                    curStock = currentBook ? Number(currentBook.stock) : 0
+                    if (undoingItem.quantity > 0 && curStock < undoingItem.quantity) {
+                        throw new Error(`No se puede deshacer: el stock actual (${curStock} ud.) es insuficiente porque ya se vendieron unidades.`)
+                    }
+                }
+
+                // 1. Delete stock movement record
+                if (undoingItem.stock_movement_id) {
+                    const { data: deletedMov, error: movErr } = await supabase
+                        .from('stock_movements')
+                        .delete()
+                        .eq('id', undoingItem.stock_movement_id)
+                        .select()
+
+                    if (movErr) {
+                        throw new Error('Error al deshacer movimiento: ' + movErr.message)
+                    }
+                    if (!deletedMov || deletedMov.length === 0) {
+                        throw new Error('Supabase bloqueó el borrado (comprueba permisos DELETE en stock_movements).')
+                    }
+                }
+
+                // 2. Revert book stock
+                if (undoingItem.book_id > 0) {
+                    const revertedStock = Math.max(0, curStock - undoingItem.quantity)
+                    const { error: stockErr } = await supabase
+                        .from('books')
+                        .update({ stock: revertedStock })
+                        .eq('id', undoingItem.book_id)
+
+                    if (stockErr) {
+                        console.error('Error reverting stock:', stockErr)
+                    }
+                }
+            }
+
+            setUndoingItem(null)
+            setIsUndoing(false)
+            await loadHistory()
+            if (onUpdated) onUpdated()
+        } catch (err: any) {
+            console.error('Error undoing transaction:', err)
+            setUndoError(err.message || 'Error al deshacer la transacción.')
+            setIsUndoing(false)
+        }
     }
 
     useEffect(() => {
@@ -980,6 +1159,7 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
                                         <th className="px-4 py-3">Operación</th>
                                         <th className="px-4 py-3 text-center">Unidades</th>
                                         <th className="px-4 py-3 text-right">Importe</th>
+                                        <th className="px-3 py-3 text-center w-24">Acción</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-200">
@@ -1098,6 +1278,42 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
                                                         <span className="text-slate-400">-</span>
                                                     )}
                                                 </td>
+
+                                                {/* Undo Action Button */}
+                                                <td className="px-3 py-3 text-center whitespace-nowrap">
+                                                    {(() => {
+                                                        const restriction = getUndoRestriction(item)
+                                                        if (restriction) {
+                                                            return (
+                                                                <span
+                                                                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-400 cursor-not-allowed opacity-75"
+                                                                    title={restriction}
+                                                                >
+                                                                    <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                                                    </svg>
+                                                                    <span>Bloqueado</span>
+                                                                </span>
+                                                            )
+                                                        }
+                                                        return (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setUndoingItem(item)
+                                                                    setUndoError(null)
+                                                                }}
+                                                                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 transition cursor-pointer shadow-2xs group"
+                                                                title="Deshacer esta transacción"
+                                                            >
+                                                                <svg className="w-3.5 h-3.5 text-slate-400 group-hover:text-rose-600 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+                                                                </svg>
+                                                                <span>Deshacer</span>
+                                                            </button>
+                                                        )
+                                                    })()}
+                                                </td>
                                             </tr>
                                         )
                                     })}
@@ -1177,6 +1393,99 @@ export default function HistoryModal({ fairId, fairName, books, onClose }: Props
                     </div>
                 </div>
             </div>
+
+            {/* Modal de confirmación para Deshacer Transacción - Visual y sin texto excesivo */}
+            {undoingItem && (
+                <div className="fixed inset-0 z-60 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+                    <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl border border-slate-200 text-slate-900 flex flex-col">
+                        
+                        {/* Header: Icono + Título */}
+                        <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-rose-700 border border-rose-200">
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 className="text-base font-extrabold text-slate-900 leading-tight">
+                                    {undoingItem.type === 'sale' ? '¿Anular esta venta?' : '¿Deshacer movimiento?'}
+                                </h4>
+                                <span className="text-[11px] text-slate-500 font-medium">
+                                    Se actualizará el stock automáticamente.
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Tarjeta de resumen visual */}
+                        <div className="my-4 rounded-xl bg-slate-50 border border-slate-200/90 p-3.5 space-y-2.5 text-xs">
+                            <div className="flex items-start justify-between gap-2">
+                                <span className="text-slate-500 font-bold shrink-0">Libro:</span>
+                                <span className="font-extrabold text-slate-900 text-right truncate">
+                                    {undoingItem.book_title}
+                                </span>
+                            </div>
+
+                            <div className="flex items-center justify-between gap-2">
+                                <span className="text-slate-500 font-bold shrink-0">Stock:</span>
+                                <span className="font-extrabold font-mono text-emerald-800 bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md">
+                                    {undoingItem.type === 'sale'
+                                        ? `+${undoingItem.quantity} ud. al inventario`
+                                        : undoingItem.quantity > 0
+                                            ? `-${undoingItem.quantity} ud. (se resta)`
+                                            : `+${Math.abs(undoingItem.quantity)} ud. (se suma)`
+                                    }
+                                </span>
+                            </div>
+
+                            {undoingItem.type === 'sale' && (
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-slate-500 font-bold shrink-0">Caja:</span>
+                                    <span className="font-extrabold font-mono text-rose-800 bg-rose-100 border border-rose-200 px-2 py-0.5 rounded-md">
+                                        -{undoingItem.total_price?.toFixed(2)} € ({undoingItem.payment_method === 'efectivo' ? 'Efectivo' : 'Bizum'})
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+
+                        {undoError && (
+                            <div className="mb-3 rounded-xl bg-red-50 border border-red-200 p-2.5 text-xs font-semibold text-red-700">
+                                {undoError}
+                            </div>
+                        )}
+
+                        {/* Botones de acción directos */}
+                        <div className="flex items-center justify-end gap-2 pt-1">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setUndoingItem(null)
+                                    setUndoError(null)
+                                }}
+                                disabled={isUndoing}
+                                className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                            >
+                                Cancelar
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={handleConfirmUndo}
+                                disabled={isUndoing}
+                                className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-rose-700 active:scale-[0.98] transition cursor-pointer disabled:opacity-50"
+                            >
+                                {isUndoing ? (
+                                    <>
+                                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                                        <span>Deshaciendo...</span>
+                                    </>
+                                ) : (
+                                    <span>Confirmar</span>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
