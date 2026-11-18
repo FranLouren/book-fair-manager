@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { BRAND } from '@/lib/brand'
 
 export default function Home() {
   const router = useRouter()
@@ -20,9 +21,9 @@ export default function Home() {
   }, [router])
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-[#f3f4f6] text-slate-900 font-sans">
+    <main className={`flex min-h-screen flex-col items-center justify-center ${BRAND.theme.loadingBg} text-slate-900 font-sans`}>
       <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-300 border-t-slate-800 mb-4"></div>
-      <p className="text-sm font-bold text-slate-600">Cargando Masticadores León...</p>
+      <p className="text-sm font-bold text-slate-600">Cargando {BRAND.name}...</p>
     </main>
   )
 }

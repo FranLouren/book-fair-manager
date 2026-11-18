@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
+import { BRAND } from "@/lib/brand";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -9,12 +10,16 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Feria Masticadores",
-  description: "Gestión de Ferias del Libro de Masticadores León",
-  icons: {
-    icon: "/logo.jpg",
-    apple: "/logo.jpg",
-  },
+  title: BRAND.title,
+  description: `${BRAND.subtitle} - ${BRAND.name}`,
+  ...(BRAND.showLogo
+    ? {
+        icons: {
+          icon: BRAND.logo,
+          apple: BRAND.logo,
+        },
+      }
+    : {}),
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

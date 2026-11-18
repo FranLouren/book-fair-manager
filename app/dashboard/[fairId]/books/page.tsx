@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { BRAND } from '@/lib/brand'
 import NewBookModal from '@/components/NewBookModal'
 import EditBookModal from '@/components/EditBookModal'
 import SellBookModal from '@/components/SellBookModal'
@@ -72,7 +73,7 @@ export default function BooksPage() {
 
     // Set tab title and load fair details & books on mount
     useEffect(() => {
-        document.title = "Feria Masticadores"
+        document.title = BRAND.title
         if (fairId) {
             loadFairDetails()
             loadBooks()
@@ -294,23 +295,31 @@ export default function BooksPage() {
     )
 
     return (
-        <div className="min-h-screen bg-[#eaedf1] text-slate-900 font-sans">
+        <div className={`min-h-screen ${BRAND.theme.pageBg} text-slate-900 font-sans`}>
             {/* Global Consistent Header Navbar - Option 2: Clean White with true elevation & contrast */}
-            <header className="border-t-[3px] border-t-slate-900 border-b border-slate-300 bg-white px-6 py-5 shadow-md sticky top-0 z-30">
+            <header className={`border-t-[3px] ${BRAND.theme.headerBorderTop} border-b border-slate-300 bg-white px-6 py-5 shadow-md sticky top-0 z-30`}>
                 <div className="mx-auto max-w-7xl relative flex items-center justify-center min-h-[64px]">
                     {/* Centered Logo & Title */}
                     <div
                         className="flex flex-col sm:flex-row items-center justify-center gap-4 text-center cursor-pointer"
                         onClick={() => router.push('/dashboard')}
                     >
-                        <img
-                            src="/logo.jpg"
-                            alt="Masticadores León Logo"
-                            className="h-16 w-16 rounded-full object-cover border-2 border-slate-200 shadow-sm"
-                        />
+                        {BRAND.showLogo ? (
+                            <img
+                                src={BRAND.logo}
+                                alt={`${BRAND.name} Logo`}
+                                className="h-16 w-16 rounded-full object-cover border-2 border-slate-200 shadow-sm"
+                            />
+                        ) : (
+                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-sm">
+                                <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                </svg>
+                            </div>
+                        )}
                         <div className="text-center sm:text-left">
-                            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight leading-tight">Masticadores León</h1>
-                            <p className="text-sm font-semibold text-slate-500 mt-0.5">Gestión de Ferias del Libro</p>
+                            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight leading-tight">{BRAND.name}</h1>
+                            <p className="text-sm font-semibold text-slate-500 mt-0.5">{BRAND.subtitle}</p>
                         </div>
                     </div>
 
@@ -518,7 +527,7 @@ export default function BooksPage() {
                                     <>
                                         <button
                                             onClick={() => setShowBatchAuthorModal(true)}
-                                            className="inline-flex items-center gap-2 rounded-xl bg-slate-700 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800 whitespace-nowrap shadow-xs cursor-pointer"
+                                            className={`inline-flex items-center gap-2 rounded-xl ${BRAND.theme.primaryBtn} px-5 py-2.5 text-sm font-bold whitespace-nowrap shadow-xs cursor-pointer`}
                                         >
                                             <svg className="w-4 h-4 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />

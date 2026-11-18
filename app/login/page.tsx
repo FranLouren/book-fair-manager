@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { BRAND } from '@/lib/brand'
 
 export default function LoginPage() {
     // Form state management
@@ -14,7 +15,7 @@ export default function LoginPage() {
     const router = useRouter()
 
     useEffect(() => {
-        document.title = "Feria Masticadores"
+        document.title = BRAND.title
         async function checkAlreadyLoggedIn() {
             const { data: { session } } = await supabase.auth.getSession()
             if (session) {
@@ -48,17 +49,25 @@ export default function LoginPage() {
     }
 
     return (
-        <main className="flex min-h-screen items-center justify-center bg-slate-50 bg-gradient-to-br from-slate-50 via-slate-100 to-indigo-50/40 p-4">
+        <main className={`flex min-h-screen items-center justify-center bg-slate-50 bg-gradient-to-br ${BRAND.theme.loginGradient} p-4`}>
             <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl shadow-slate-200/60 border border-slate-200/80">
                 {/* Header branding with logo */}
                 <div className="flex flex-col items-center text-center mb-8">
-                    <img
-                        src="/logo.jpg"
-                        alt="Masticadores León Logo"
-                        className="h-20 w-20 rounded-full object-cover border-2 border-indigo-500/20 shadow-md mb-4"
-                    />
-                    <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Masticadores León</h1>
-                    <p className="mt-1 text-sm text-slate-500 font-medium">Gestión de Ferias del Libro</p>
+                    {BRAND.showLogo ? (
+                        <img
+                            src={BRAND.logo}
+                            alt={`${BRAND.name} Logo`}
+                            className="h-20 w-20 rounded-full object-cover border-2 border-indigo-500/20 shadow-md mb-4"
+                        />
+                    ) : (
+                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-md mb-4">
+                            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>
+                        </div>
+                    )}
+                    <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">{BRAND.name}</h1>
+                    <p className="mt-1 text-sm text-slate-500 font-medium">{BRAND.subtitle}</p>
                 </div>
 
                 {/* Login Form */}
