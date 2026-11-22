@@ -77,7 +77,19 @@ CREATE INDEX IF NOT EXISTS idx_stock_movements_fair_id ON public.stock_movements
 CREATE INDEX IF NOT EXISTS idx_stock_movements_book_id ON public.stock_movements(book_id);
 
 -- ============================================================================
--- Row Level Security (RLS) - Acceso completo a usuarios autenticados
+-- Permisos de tabla en PostgreSQL (GRANT)
+-- ============================================================================
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL ROUTINES IN SCHEMA public TO anon, authenticated, service_role;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO anon, authenticated, service_role;
+
+-- ============================================================================
+-- Row Level Security (RLS) - Acceso completo (anon y authenticated)
 -- ============================================================================
 ALTER TABLE public.fairs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.authors ENABLE ROW LEVEL SECURITY;
@@ -86,21 +98,28 @@ ALTER TABLE public.sales ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.sale_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.stock_movements ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Authenticated full access on fairs"
-ON public.fairs FOR ALL TO authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Authenticated full access on fairs" ON public.fairs;
+DROP POLICY IF EXISTS "Authenticated full access on authors" ON public.authors;
+DROP POLICY IF EXISTS "Authenticated full access on books" ON public.books;
+DROP POLICY IF EXISTS "Authenticated full access on sales" ON public.sales;
+DROP POLICY IF EXISTS "Authenticated full access on sale_items" ON public.sale_items;
+DROP POLICY IF EXISTS "Authenticated full access on stock_movements" ON public.stock_movements;
 
-CREATE POLICY "Authenticated full access on authors"
-ON public.authors FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Full access on fairs"
+ON public.fairs FOR ALL USING (true) WITH CHECK (true);
 
-CREATE POLICY "Authenticated full access on books"
-ON public.books FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Full access on authors"
+ON public.authors FOR ALL USING (true) WITH CHECK (true);
 
-CREATE POLICY "Authenticated full access on sales"
-ON public.sales FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Full access on books"
+ON public.books FOR ALL USING (true) WITH CHECK (true);
 
-CREATE POLICY "Authenticated full access on sale_items"
-ON public.sale_items FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Full access on sales"
+ON public.sales FOR ALL USING (true) WITH CHECK (true);
 
-CREATE POLICY "Authenticated full access on stock_movements"
-ON public.stock_movements FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Full access on sale_items"
+ON public.sale_items FOR ALL USING (true) WITH CHECK (true);
+
+CREATE POLICY "Full access on stock_movements"
+ON public.stock_movements FOR ALL USING (true) WITH CHECK (true);
 

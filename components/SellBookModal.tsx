@@ -23,6 +23,7 @@ type Props = {
     fairId: number
     books: Book[]
     discountPercentage: number
+    initialBook?: Book | null
     onClose: () => void
     onSold: () => void
 }
@@ -36,10 +37,16 @@ export default function SellBookModal({
     fairId,
     books,
     discountPercentage,
+    initialBook,
     onClose,
     onSold,
 }: Props) {
-    const [cartItems, setCartItems] = useState<CartItem[]>([])
+    const [cartItems, setCartItems] = useState<CartItem[]>(() => {
+        if (initialBook && initialBook.stock > 0) {
+            return [{ book: initialBook, quantity: 1 }]
+        }
+        return []
+    })
     const [searchQuery, setSearchQuery] = useState('')
     const [isDropdownOpen, setIsDropdownOpen] = useState(false)
     const [paymentMethod, setPaymentMethod] = useState<'efectivo' | 'bizum'>('efectivo')
@@ -315,10 +322,11 @@ export default function SellBookModal({
                                                         {b.author || 'Sin autor'} {b.isbn ? `• ${b.isbn}` : ''}
                                                     </p>
                                                 </div>
-                                                <div className="flex items-center gap-2 shrink-0">
-                                                    <span className="font-mono text-emerald-800 font-extrabold text-xs">
-                                                        {discounted.toFixed(2)} €
-                                                    </span>
+                                                <div className="flex items-center gap-2.5 shrink-0">
+                                                    <div className="text-right">
+                                                        <div className="text-[10px] text-slate-500 font-mono">PVP: {b.price.toFixed(2)} €</div>
+                                                        <div className="text-xs font-mono font-extrabold text-emerald-700">Feria: {discounted.toFixed(2)} €</div>
+                                                    </div>
                                                     <span
                                                         className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${
                                                             isOutOfStock
@@ -366,9 +374,15 @@ export default function SellBookModal({
                                         >
                                             <div className="min-w-0 flex-1">
                                                 <h4 className="font-bold text-slate-900 text-xs sm:text-sm truncate">{item.book.title}</h4>
-                                                <p className="text-[11px] text-slate-500 truncate">
-                                                    {item.book.author || 'Sin autor'} • <span className="text-slate-600 font-medium">Stock: {item.book.stock}</span>
-                                                </p>
+                                                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5 text-[11px]">
+                                                    <span className="text-slate-500 truncate">{item.book.author || 'Sin autor'}</span>
+                                                    <span className="text-slate-300">•</span>
+                                                    <span className="text-slate-500">PVP: <span className="font-semibold text-slate-700 font-mono">{item.book.price.toFixed(2)} €</span></span>
+                                                    <span className="text-slate-300">•</span>
+                                                    <span className="text-emerald-700 font-bold">Feria: <span className="font-mono">{unitPrice.toFixed(2)} €</span></span>
+                                                    <span className="text-slate-300">•</span>
+                                                    <span className="text-slate-500 font-medium">Stock: {item.book.stock}</span>
+                                                </div>
                                             </div>
 
                                             <div className="flex items-center gap-2.5 shrink-0">

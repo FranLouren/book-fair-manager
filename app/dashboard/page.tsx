@@ -62,6 +62,7 @@ export default function DashboardPage() {
 
         if (error) {
             console.error('Error loading fairs:', error)
+            setLoading(false)
             return
         }
 
